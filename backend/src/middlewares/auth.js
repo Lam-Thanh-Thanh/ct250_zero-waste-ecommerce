@@ -148,7 +148,9 @@ const optionalAuth = async (req, res, next) => {
 
 module.exports = {
   authMiddleware,
+  protect: authMiddleware, // Alias để dùng trong routes
   adminMiddleware,
+  admin: adminMiddleware, // Alias để dùng trong routes
   authorize,
   optionalAuth
 };

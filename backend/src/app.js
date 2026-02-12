@@ -10,20 +10,20 @@ connectDB();
 
 // ===== MIDDLEWARE =====
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Allow localhost on any port
     if (origin.match(/^http:\/\/localhost:\d+$/)) {
       return callback(null, true);
     }
-    
+
     // Allow configured frontend URL
     if (origin === process.env.FRONTEND_URL) {
       return callback(null, true);
     }
-    
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true
@@ -34,23 +34,33 @@ app.use(morgan('dev'));
 
 // ===== HEALTH CHECK =====
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     message: 'Zero-Waste E-commerce API is running!',
     timestamp: new Date().toISOString()
   });
 });
 
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
+const packagingRoutes = require('./routes/packagingRoutes');
+const certificateRoutes = require('./routes/certificateRoutes');
+const bannerRoutes = require('./routes/bannerRoutes');
 // ===== ROUTES =====
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/packagings', packagingRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/banners', bannerRoutes);
 
 // TODO: Thêm các routes khác
 // app.use('/api/products', require('./routes/productRoutes'));
 // app.use('/api/categories', require('./routes/categoryRoutes'));
 // app.use('/api/cart', require('./routes/cartRoutes'));
-// app.use('/api/orders', require('./routes/orderRoutes'));
-// app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 // app.use('/api/promotions', require('./routes/promotionRoutes'));
 // app.use('/api/chatbot', require('./routes/chatbotRoutes'));
 
@@ -65,7 +75,7 @@ app.use((req, res) => {
 // ===== ERROR HANDLER =====
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
-  
+
   // Mongoose validation error
   if (err.name === 'ValidationError') {
     const errors = Object.values(err.errors).map(e => e.message);
@@ -75,7 +85,7 @@ app.use((err, req, res, next) => {
       errors
     });
   }
-  
+
   // Mongoose duplicate key error
   if (err.code === 11000) {
     const field = Object.keys(err.keyPattern)[0];
@@ -84,7 +94,7 @@ app.use((err, req, res, next) => {
       message: `${field} đã tồn tại trong hệ thống`
     });
   }
-  
+
   // Mongoose cast error (invalid ObjectId)
   if (err.name === 'CastError') {
     return res.status(400).json({
@@ -92,7 +102,7 @@ app.use((err, req, res, next) => {
       message: 'ID không hợp lệ'
     });
   }
-  
+
   // Default error
   res.status(err.status || 500).json({
     success: false,
