@@ -13,10 +13,18 @@ import Profile from './pages/Profile';
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
+import CategoryManagement from './pages/admin/CategoryManagement';
+import ProductManagement from './pages/admin/ProductManagement';
+import PackagingManagement from './pages/admin/Packagingmanagement';
+import CertificateManagement from './pages/admin/CertificateManagement';
+import BannerManagement from './pages/admin/BannerManagement';
+import OrderManagement from './pages/admin/OrderManagement';
+import ReviewManagement from './pages/admin/ReviewManagement';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import AdminLayout from './components/layout/AdminLayout';
 
 function App() {
   return (
@@ -45,7 +53,9 @@ function App() {
                 path="/admin/dashboard"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <Dashboard />
+                    <AdminLayout>
+                      <Dashboard />
+                    </AdminLayout>
                   </ProtectedRoute>
                 }
               />
@@ -53,7 +63,79 @@ function App() {
                 path="/admin/users"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <UserManagement />
+                    <AdminLayout>
+                      <UserManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/categories"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <CategoryManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/products"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <ProductManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/orders"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <OrderManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reviews"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <ReviewManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/packagings"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <PackagingManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/certificates"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <CertificateManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/banners"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <BannerManagement />
+                    </AdminLayout>
                   </ProtectedRoute>
                 }
               />

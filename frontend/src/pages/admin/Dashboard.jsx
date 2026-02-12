@@ -203,7 +203,7 @@ const Dashboard = () => {
             </h2>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               <Link
                 to="/admin/users"
                 className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
@@ -231,9 +231,39 @@ const Dashboard = () => {
                 </div>
               </Link>
 
-              <div className="flex items-center p-4 bg-gray-100 rounded-lg cursor-not-allowed">
+              <Link
+                to="/admin/categories"
+                className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition"
+              >
                 <svg
-                  className="h-8 w-8 text-gray-400 mr-3"
+                  className="h-8 w-8 text-green-600 mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                  />
+                </svg>
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Quản lý danh mục
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Quản lý danh mục sản phẩm
+                  </p>
+                </div>
+              </Link>
+
+              <Link
+                to="/admin/products"
+                className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition"
+              >
+                <svg
+                  className="h-8 w-8 text-purple-600 mr-3"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -246,16 +276,37 @@ const Dashboard = () => {
                   />
                 </svg>
                 <div>
-                  <p className="font-semibold text-gray-500">
+                  <p className="font-semibold text-gray-900">
                     Quản lý sản phẩm
                   </p>
-                  <p className="text-sm text-gray-400">Đang phát triển</p>
+                  <p className="text-sm text-gray-600">
+                    Quản lý kho và sản phẩm
+                  </p>
                 </div>
-              </div>
+              </Link>
+              <Link
+                to="/admin/orders"
+                className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-100 rounded-lg">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Order Management</h3>
+                    <p className="text-sm text-gray-600">Quản lý đơn hàng</p>
+                  </div>
+                </div>
+              </Link>
 
-              <div className="flex items-center p-4 bg-gray-100 rounded-lg cursor-not-allowed">
+              <Link
+                to="/admin/packagings"
+                className="flex items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition"
+              >
                 <svg
-                  className="h-8 w-8 text-gray-400 mr-3"
+                  className="h-8 w-8 text-orange-600 mr-3"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -264,16 +315,45 @@ const Dashboard = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                   />
                 </svg>
                 <div>
-                  <p className="font-semibold text-gray-500">
-                    Quản lý đơn hàng
+                  <p className="font-semibold text-gray-900">
+                    Quản lý bao bì
                   </p>
-                  <p className="text-sm text-gray-400">Đang phát triển</p>
+                  <p className="text-sm text-gray-600">
+                    Quản lý loại bao bì eco
+                  </p>
                 </div>
-              </div>
+              </Link>
+
+              <Link
+                to="/admin/certificates"
+                className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition"
+              >
+                <svg
+                  className="h-8 w-8 text-yellow-600 mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                  />
+                </svg>
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Quản lý chứng chỉ
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Quản lý chứng chỉ xanh
+                  </p>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
