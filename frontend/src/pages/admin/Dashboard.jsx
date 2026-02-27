@@ -5,7 +5,7 @@ import axios from '../../api/axios';
 import { toast } from 'react-toastify';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +25,13 @@ const Dashboard = () => {
     }
   };
 
+  const today = new Date().toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -33,354 +40,207 @@ const Dashboard = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Link to="/" className="text-xl font-bold text-green-600">
-                Zero-Waste Admin
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">
-                Xin chào, <strong>{user?.username}</strong>
-              </span>
-              <button
-                onClick={logout}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                Đăng xuất
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+  const statCards = [
+    {
+      label: 'Tổng người dùng',
+      value: stats?.totalUsers || 0,
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+      color: 'bg-blue-50 text-blue-600',
+      border: 'border-blue-200'
+    },
+    {
+      label: 'Đang hoạt động',
+      value: stats?.totalActiveUsers || 0,
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      color: 'bg-green-50 text-green-600',
+      border: 'border-green-200'
+    },
+    {
+      label: 'Mới tháng này',
+      value: stats?.newUsersThisMonth || 0,
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+        </svg>
+      ),
+      color: 'bg-purple-50 text-purple-600',
+      border: 'border-purple-200'
+    },
+    {
+      label: 'Quản trị viên',
+      value: stats?.usersByRole?.admin || 0,
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      ),
+      color: 'bg-orange-50 text-orange-600',
+      border: 'border-orange-200'
+    }
+  ];
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Title */}
+  const quickActions = [
+    {
+      to: '/admin/products',
+      label: 'Sản phẩm',
+      desc: 'Quản lý kho và sản phẩm',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+      color: 'text-green-600 bg-green-50'
+    },
+    {
+      to: '/admin/orders',
+      label: 'Đơn hàng',
+      desc: 'Theo dõi đơn hàng',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+      ),
+      color: 'text-blue-600 bg-blue-50'
+    },
+    {
+      to: '/admin/users',
+      label: 'Người dùng',
+      desc: 'Quản lý tài khoản',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+      color: 'text-purple-600 bg-purple-50'
+    },
+    {
+      to: '/admin/categories',
+      label: 'Danh mục',
+      desc: 'Quản lý danh mục',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      ),
+      color: 'text-orange-600 bg-orange-50'
+    },
+    {
+      to: '/admin/packagings',
+      label: 'Bao bì',
+      desc: 'Bao bì thân thiện môi trường',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+      ),
+      color: 'text-teal-600 bg-teal-50'
+    },
+    {
+      to: '/admin/certificates',
+      label: 'Chứng chỉ',
+      desc: 'Chứng chỉ xanh',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      ),
+      color: 'text-yellow-600 bg-yellow-50'
+    },
+    {
+      to: '/admin/reviews',
+      label: 'Đánh giá',
+      desc: 'Kiểm duyệt đánh giá',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+      ),
+      color: 'text-pink-600 bg-pink-50'
+    },
+    {
+      to: '/admin/banners',
+      label: 'Banner',
+      desc: 'Quản lý banner trang chủ',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      color: 'text-indigo-600 bg-indigo-50'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Tổng quan hệ thống quản lý cửa hàng
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Xin chào, {user?.username || user?.name || 'Admin'} 👋
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">{today}</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Tổng người dùng */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                <svg
-                  className="h-6 w-6 text-blue-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Tổng người dùng
-                  </dt>
-                  <dd className="text-2xl font-bold text-gray-900">
-                    {stats?.totalUsers || 0}
-                  </dd>
-                </dl>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {statCards.map((card, index) => (
+            <div key={index} className={`bg-white rounded-lg border ${card.border} p-5`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">{card.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
+                </div>
+                <div className={`p-3 rounded-lg ${card.color}`}>
+                  {card.icon}
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Người dùng hoạt động */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-                <svg
-                  className="h-6 w-6 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Đang hoạt động
-                  </dt>
-                  <dd className="text-2xl font-bold text-gray-900">
-                    {stats?.totalActiveUsers || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-
-          {/* Người dùng mới tháng này */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-purple-100 rounded-md p-3">
-                <svg
-                  className="h-6 w-6 text-purple-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Mới tháng này
-                  </dt>
-                  <dd className="text-2xl font-bold text-gray-900">
-                    {stats?.newUsersThisMonth || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-
-          {/* Admin */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
-                <svg
-                  className="h-6 w-6 text-red-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Quản trị viên
-                  </dt>
-                  <dd className="text-2xl font-bold text-gray-900">
-                    {stats?.usersByRole?.admin || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Thao tác nhanh
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Thao tác nhanh</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {quickActions.map((action, index) => (
               <Link
-                to="/admin/users"
-                className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+                key={index}
+                to={action.to}
+                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all group"
               >
-                <svg
-                  className="h-8 w-8 text-blue-600 mr-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    Quản lý người dùng
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Xem và quản lý tài khoản
-                  </p>
+                <div className={`w-10 h-10 rounded-lg ${action.color} flex items-center justify-center mb-3`}>
+                  {action.icon}
                 </div>
+                <p className="font-medium text-gray-900 text-sm">{action.label}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{action.desc}</p>
               </Link>
-
-              <Link
-                to="/admin/categories"
-                className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition"
-              >
-                <svg
-                  className="h-8 w-8 text-green-600 mr-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    Quản lý danh mục
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Quản lý danh mục sản phẩm
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                to="/admin/products"
-                className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition"
-              >
-                <svg
-                  className="h-8 w-8 text-purple-600 mr-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    Quản lý sản phẩm
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Quản lý kho và sản phẩm
-                  </p>
-                </div>
-              </Link>
-              <Link
-                to="/admin/orders"
-                className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-orange-100 rounded-lg">
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Order Management</h3>
-                    <p className="text-sm text-gray-600">Quản lý đơn hàng</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link
-                to="/admin/packagings"
-                className="flex items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition"
-              >
-                <svg
-                  className="h-8 w-8 text-orange-600 mr-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    Quản lý bao bì
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Quản lý loại bao bì eco
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                to="/admin/certificates"
-                className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition"
-              >
-                <svg
-                  className="h-8 w-8 text-yellow-600 mr-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    Quản lý chứng chỉ
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Quản lý chứng chỉ xanh
-                  </p>
-                </div>
-              </Link>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Hoạt động gần đây
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="text-center py-12 text-gray-500">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                />
-              </svg>
-              <p className="mt-2">Chưa có hoạt động nào</p>
+        {/* System Info */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Thông tin hệ thống</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <span className="text-gray-600">Hệ thống đang hoạt động</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">Tổng khách hàng:</span>
+              <span className="font-medium text-gray-900">{stats?.usersByRole?.user || 0}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">Quản trị viên:</span>
+              <span className="font-medium text-gray-900">{stats?.usersByRole?.admin || 0}</span>
             </div>
           </div>
         </div>

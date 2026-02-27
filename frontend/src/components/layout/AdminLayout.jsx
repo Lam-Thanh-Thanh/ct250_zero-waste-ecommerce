@@ -92,6 +92,15 @@ const AdminLayout = ({ children }) => {
             )
         },
         {
+            name: 'Chatbot AI',
+            path: '/admin/chatbot-config',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 5l-4-4H9a7 7 0 110-14 7 7 0 017 7v7z" />
+                </svg>
+            )
+        },
+        {
             name: 'Bao bì',
             path: '/admin/packagings',
             icon: (
@@ -185,6 +194,22 @@ const AdminLayout = ({ children }) => {
                         );
                     })}
                 </nav>
+
+                {/* Storefront Link */}
+                <div className={`border-t px-3 py-2 ${isCollapsed ? 'px-2' : ''}`}>
+                    <Link
+                        to="/"
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 hover:bg-green-50 hover:text-green-700 transition-all duration-300 ${isCollapsed ? 'justify-center px-2' : ''}`}
+                        title={isCollapsed ? 'Về Trang chủ' : ''}
+                    >
+                        <span className="flex-shrink-0">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </span>
+                        <span className={`font-medium text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[180px] opacity-100'}`}>Về Trang chủ</span>
+                    </Link>
+                </div>
 
                 {/* User Info & Logout */}
                 <div className="border-t bg-white p-4 transition-all duration-300">

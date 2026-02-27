@@ -30,7 +30,6 @@ const CertificateManagement = () => {
         organization: '',
         description: '',
         issuedDate: '',
-        ecoPoints: '0',
         isActive: true
     });
     const [imageFile, setImageFile] = useState(null);
@@ -83,7 +82,6 @@ const CertificateManagement = () => {
                 organization: certificate.organization,
                 description: certificate.description || '',
                 issuedDate: certificate.issuedDate ? new Date(certificate.issuedDate).toISOString().split('T')[0] : '',
-                ecoPoints: certificate.ecoPoints.toString(),
                 isActive: certificate.isActive
             });
             setImagePreview(certificate.image?.url || null);
@@ -94,7 +92,6 @@ const CertificateManagement = () => {
                 organization: '',
                 description: '',
                 issuedDate: '',
-                ecoPoints: '0',
                 isActive: true
             });
             setImagePreview(null);
@@ -111,7 +108,6 @@ const CertificateManagement = () => {
             organization: '',
             description: '',
             issuedDate: '',
-            ecoPoints: '0',
             isActive: true
         });
         setImageFile(null);
@@ -151,7 +147,6 @@ const CertificateManagement = () => {
             data.append('organization', formData.organization);
             data.append('description', formData.description);
             data.append('issuedDate', formData.issuedDate);
-            data.append('ecoPoints', formData.ecoPoints);
             data.append('isActive', formData.isActive);
 
             if (imageFile) {
@@ -226,34 +221,17 @@ const CertificateManagement = () => {
                         </div>
 
                         {/* Filters */}
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => handleFilterChange('all')}
-                                className={`px-4 py-2 rounded-lg font-medium ${isActiveFilter === 'all'
-                                        ? 'bg-primary-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                            <select
+                                value={isActiveFilter}
+                                onChange={(e) => handleFilterChange(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             >
-                                Tất cả
-                            </button>
-                            <button
-                                onClick={() => handleFilterChange('true')}
-                                className={`px-4 py-2 rounded-lg font-medium ${isActiveFilter === 'true'
-                                        ? 'bg-primary-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Hoạt động
-                            </button>
-                            <button
-                                onClick={() => handleFilterChange('false')}
-                                className={`px-4 py-2 rounded-lg font-medium ${isActiveFilter === 'false'
-                                        ? 'bg-primary-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Không hoạt động
-                            </button>
+                                <option value="all">Tất cả</option>
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
                         </div>
 
                         {/* Add Button */}
@@ -289,9 +267,6 @@ const CertificateManagement = () => {
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                         Tổ chức cấp
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                        Eco Points
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                         Ngày cấp
@@ -333,11 +308,6 @@ const CertificateManagement = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-900">{certificate.organization}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                                                +{certificate.ecoPoints} điểm
-                                            </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {new Date(certificate.issuedDate).toLocaleDateString('vi-VN')}
@@ -487,34 +457,18 @@ const CertificateManagement = () => {
                                     />
                                 </div>
 
-                                {/* Issued Date & Eco Points */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Ngày cấp
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="issuedDate"
-                                            value={formData.issuedDate}
-                                            onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Eco Points (0-20)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            name="ecoPoints"
-                                            value={formData.ecoPoints}
-                                            onChange={handleInputChange}
-                                            min="0"
-                                            max="20"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                        />
-                                    </div>
+                                {/* Issued Date */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Ngày cấp
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="issuedDate"
+                                        value={formData.issuedDate}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    />
                                 </div>
 
                                 {/* Image Upload */}

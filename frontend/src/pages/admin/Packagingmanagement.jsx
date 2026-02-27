@@ -33,7 +33,6 @@ const PackagingManagement = () => {
         isReusable: false,
         isRecyclable: false,
         decompositionTime: '',
-        ecoPoints: '0',
         isActive: true
     });
     const [submitting, setSubmitting] = useState(false);
@@ -82,7 +81,6 @@ const PackagingManagement = () => {
                 isReusable: packaging.isReusable,
                 isRecyclable: packaging.isRecyclable,
                 decompositionTime: packaging.decompositionTime?.toString() || '',
-                ecoPoints: packaging.ecoPoints.toString(),
                 isActive: packaging.isActive
             });
         } else {
@@ -95,7 +93,6 @@ const PackagingManagement = () => {
                 isReusable: false,
                 isRecyclable: false,
                 decompositionTime: '',
-                ecoPoints: '0',
                 isActive: true
             });
         }
@@ -113,7 +110,6 @@ const PackagingManagement = () => {
             isReusable: false,
             isRecyclable: false,
             decompositionTime: '',
-            ecoPoints: '0',
             isActive: true
         });
     };
@@ -141,7 +137,6 @@ const PackagingManagement = () => {
                 isReusable: formData.isReusable,
                 isRecyclable: formData.isRecyclable,
                 decompositionTime: formData.decompositionTime ? parseInt(formData.decompositionTime) : null,
-                ecoPoints: parseFloat(formData.ecoPoints),
                 isActive: formData.isActive
             };
 
@@ -209,67 +204,30 @@ const PackagingManagement = () => {
                         </div>
 
                         {/* Filters */}
-                        <div className="flex gap-2 flex-wrap">
-                            <div className="flex gap-2">
-                                <span className="text-sm text-gray-600 font-medium py-2">Trạng thái:</span>
-                                <button
-                                    onClick={() => setIsActiveFilter('all')}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium ${isActiveFilter === 'all'
-                                            ? 'bg-primary-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
+                        <div className="flex gap-4 flex-wrap">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                                <select
+                                    value={isActiveFilter}
+                                    onChange={(e) => setIsActiveFilter(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 >
-                                    Tất cả
-                                </button>
-                                <button
-                                    onClick={() => setIsActiveFilter('true')}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium ${isActiveFilter === 'true'
-                                            ? 'bg-primary-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    Hoạt động
-                                </button>
-                                <button
-                                    onClick={() => setIsActiveFilter('false')}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium ${isActiveFilter === 'false'
-                                            ? 'bg-primary-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    Không hoạt động
-                                </button>
+                                    <option value="all">Tất cả</option>
+                                    <option value="true">Hoạt động</option>
+                                    <option value="false">Không hoạt động</option>
+                                </select>
                             </div>
-
-                            <div className="flex gap-2">
-                                <span className="text-sm text-gray-600 font-medium py-2">Phân hủy:</span>
-                                <button
-                                    onClick={() => setBiodegradableFilter('all')}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium ${biodegradableFilter === 'all'
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phân hủy</label>
+                                <select
+                                    value={biodegradableFilter}
+                                    onChange={(e) => setBiodegradableFilter(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 >
-                                    Tất cả
-                                </button>
-                                <button
-                                    onClick={() => setBiodegradableFilter('true')}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium ${biodegradableFilter === 'true'
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    Phân hủy sinh học
-                                </button>
-                                <button
-                                    onClick={() => setBiodegradableFilter('false')}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium ${biodegradableFilter === 'false'
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    Không phân hủy sinh học
-                                </button>
+                                    <option value="all">Tất cả</option>
+                                    <option value="true">Phân hủy sinh học</option>
+                                    <option value="false">Không phân hủy</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -301,9 +259,6 @@ const PackagingManagement = () => {
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                         Phân hủy
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                        Eco Points
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                         Số SP
@@ -361,11 +316,6 @@ const PackagingManagement = () => {
                                                     Không phân hủy
                                                 </span>
                                             )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                                                +{packaging.ecoPoints} điểm
-                                            </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
@@ -555,37 +505,21 @@ const PackagingManagement = () => {
                                     </div>
                                 </div>
 
-                                {/* Decomposition Time & Eco Points */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Thời gian phân hủy (ngày)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            name="decompositionTime"
-                                            value={formData.decompositionTime}
-                                            onChange={handleInputChange}
-                                            min="0"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                            placeholder="VD: 90"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">Chỉ áp dụng nếu phân hủy sinh học</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Eco Points (0-20)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            name="ecoPoints"
-                                            value={formData.ecoPoints}
-                                            onChange={handleInputChange}
-                                            min="0"
-                                            max="20"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                        />
-                                    </div>
+                                {/* Decomposition Time */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Thời gian phân hủy (ngày)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="decompositionTime"
+                                        value={formData.decompositionTime}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        placeholder="VD: 90"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Chỉ áp dụng nếu phân hủy sinh học</p>
                                 </div>
 
                                 {/* Active Status */}
