@@ -103,7 +103,7 @@ reviewSchema.methods.unmarkHelpful = async function(userId) {
 // Get average rating for a product
 reviewSchema.statics.getAverageRating = async function(productId) {
     const result = await this.aggregate([
-        { $match: { product: mongoose.Types.ObjectId(productId), status: 'approved' } },
+        { $match: { product: new mongoose.Types.ObjectId(productId), status: 'approved' } },
         {
             $group: {
                 _id: null,
@@ -119,7 +119,7 @@ reviewSchema.statics.getAverageRating = async function(productId) {
 // Get rating distribution for a product
 reviewSchema.statics.getRatingDistribution = async function(productId) {
     const distribution = await this.aggregate([
-        { $match: { product: mongoose.Types.ObjectId(productId), status: 'approved' } },
+        { $match: { product: new mongoose.Types.ObjectId(productId), status: 'approved' } },
         {
             $group: {
                 _id: '$rating',
@@ -139,7 +139,7 @@ reviewSchema.statics.getRatingDistribution = async function(productId) {
 
 // ===== MIDDLEWARE =====
 // Auto-set verifiedPurchase if order is provided
-reviewSchema.pre('save', async function(next) {
+reviewSchema.pre('save', async function() {
     if (this.isNew && this.order) {
         const Order = mongoose.model('Order');
         const order = await Order.findOne({
@@ -159,7 +159,6 @@ reviewSchema.pre('save', async function(next) {
             }
         }
     }
-    next();
 });
 
 // Update product rating when review is approved/rejected

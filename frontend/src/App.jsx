@@ -20,11 +20,14 @@ import CertificateManagement from './pages/admin/CertificateManagement';
 import BannerManagement from './pages/admin/BannerManagement';
 import OrderManagement from './pages/admin/OrderManagement';
 import ReviewManagement from './pages/admin/ReviewManagement';
+import ChatbotConfig from './pages/admin/ChatbotConfig';
+import ChatbotFaqManagement from './pages/admin/ChatbotFaqManagement';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminLayout from './components/layout/AdminLayout';
+import ChatbotWidget from './components/chatbot/ChatbotWidget';
 
 function App() {
   return (
@@ -139,10 +142,33 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/chatbot-config"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <ChatbotConfig />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/chatbot-faqs"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <ChatbotFaqManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
 
               {/* 404 */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+
+            {/* Global Chatbot AI widget */}
+            <ChatbotWidget />
 
             {/* Toast notifications */}
             <ToastContainer
