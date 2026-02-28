@@ -46,6 +46,7 @@ const productRoutes = require('./routes/productRoutes');
 const packagingRoutes = require('./routes/packagingRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
 // ===== ROUTES =====
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
@@ -54,6 +55,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/packagings', packagingRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // TODO: Thêm các routes khác
 // app.use('/api/products', require('./routes/productRoutes'));
@@ -62,7 +64,6 @@ app.use('/api/banners', bannerRoutes);
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 // app.use('/api/promotions', require('./routes/promotionRoutes'));
-// app.use('/api/chatbot', require('./routes/chatbotRoutes'));
 
 // ===== 404 HANDLER =====
 app.use((req, res) => {

@@ -326,11 +326,11 @@ const OrderManagement = () => {
                                     onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                                     placeholder="Mã đơn, tên khách hàng, SĐT..."
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 />
                                 <button
                                     onClick={handleSearch}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -345,7 +345,7 @@ const OrderManagement = () => {
                             <select
                                 value={filters.status}
                                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             >
                                 <option value="all">Tất cả</option>
                                 <option value="pending">Chờ xác nhận</option>
@@ -363,7 +363,7 @@ const OrderManagement = () => {
                             <select
                                 value={filters.paymentStatus}
                                 onChange={(e) => setFilters(prev => ({ ...prev, paymentStatus: e.target.value }))}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             >
                                 <option value="all">Tất cả</option>
                                 <option value="pending">Chưa thanh toán</option>
@@ -379,7 +379,7 @@ const OrderManagement = () => {
                                 type="date"
                                 value={filters.startDate}
                                 onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
 
@@ -389,7 +389,7 @@ const OrderManagement = () => {
                                 type="date"
                                 value={filters.endDate}
                                 onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
 
@@ -401,7 +401,7 @@ const OrderManagement = () => {
                                 value={filters.minAmount}
                                 onChange={(e) => setFilters(prev => ({ ...prev, minAmount: e.target.value }))}
                                 placeholder="0"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
 
@@ -412,7 +412,7 @@ const OrderManagement = () => {
                                 value={filters.maxAmount}
                                 onChange={(e) => setFilters(prev => ({ ...prev, maxAmount: e.target.value }))}
                                 placeholder="999,999,999"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
                     </div>
@@ -421,7 +421,7 @@ const OrderManagement = () => {
                     <div className="mt-4 flex gap-3">
                         <button
                             onClick={() => fetchOrders(1)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
                             Áp dụng bộ lọc
                         </button>
@@ -437,7 +437,7 @@ const OrderManagement = () => {
                 {/* Orders Table */}
                 {loading ? (
                     <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                         <p className="mt-4 text-gray-600">Đang tải...</p>
                     </div>
                 ) : orders.length === 0 ? (
@@ -469,7 +469,7 @@ const OrderManagement = () => {
                                             <tr key={order._id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-semibold text-blue-600">{order.orderNumber}</span>
+                                                        <span className="font-semibold text-green-600">{order.orderNumber}</span>
                                                         <button
                                                             onClick={() => copyOrderNumber(order.orderNumber)}
                                                             className="text-gray-400 hover:text-gray-600"
@@ -498,7 +498,7 @@ const OrderManagement = () => {
                                                     <select
                                                         value={order.status}
                                                         onChange={(e) => handleQuickStatusUpdate(order._id, e.target.value, order.status)}
-                                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer focus:ring-2 focus:ring-blue-500 ${
+                                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer focus:ring-2 focus:ring-green-500 ${
                                                             order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                                             order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
                                                             order.status === 'processing' ? 'bg-purple-100 text-purple-800' :
@@ -631,7 +631,7 @@ const OrderManagement = () => {
                     <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         {loadingDetail ? (
                             <div className="p-12 text-center">
-                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                                 <p className="mt-4 text-gray-600">Đang tải...</p>
                             </div>
                         ) : selectedOrder ? (
@@ -718,7 +718,7 @@ const OrderManagement = () => {
                                     </div>
                                     <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                                         <span>Tổng cộng:</span>
-                                        <span className="text-blue-600">{formatCurrency(selectedOrder.totalAmount)}</span>
+                                        <span className="text-green-600">{formatCurrency(selectedOrder.totalAmount)}</span>
                                     </div>
                                 </div>
 

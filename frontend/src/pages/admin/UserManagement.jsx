@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
 import axios from '../../api/axios';
 import { toast } from 'react-toastify';
 
 const UserManagement = () => {
-  const { logout } = useAuth();
-  
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -138,30 +134,13 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <Link to="/admin/dashboard" className="text-green-600 hover:text-green-700">
-                ← Dashboard
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Quản lý người dùng
-              </h1>
-            </div>
-            <button
-              onClick={logout}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              Đăng xuất
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý Người dùng</h1>
+          <p className="text-gray-600 mt-1">Xem và quản lý tài khoản người dùng</p>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow mb-6 p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
