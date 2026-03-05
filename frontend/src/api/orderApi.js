@@ -97,7 +97,7 @@ export const getOrderStats = async () => {
 };
 
 /**
- * Lấy đơn hàng của user
+ * Lấy đơn hàng của user (Admin)
  */
 export const getUserOrders = async (userId, params = {}) => {
     try {
@@ -108,5 +108,65 @@ export const getUserOrders = async (userId, params = {}) => {
         return response.data;
     } catch (error) {
         throw error.response?.data || { message: 'Lỗi khi lấy đơn hàng' };
+    }
+};
+
+// ===== USER-FACING APIs =====
+
+/**
+ * Tạo đơn hàng mới (Checkout)
+ */
+export const createOrder = async (orderData) => {
+    try {
+        const response = await axios.post(`${API_URL}/orders`, orderData, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Lỗi khi tạo đơn hàng' };
+    }
+};
+
+/**
+ * Lấy danh sách đơn hàng của user hiện tại
+ */
+export const getMyOrders = async (params = {}) => {
+    try {
+        const response = await axios.get(`${API_URL}/orders/my-orders`, {
+            params,
+            headers: getAuthHeader()
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Lỗi khi lấy đơn hàng' };
+    }
+};
+
+/**
+ * Lấy chi tiết đơn hàng của user hiện tại
+ */
+export const getMyOrderDetail = async (orderId) => {
+    try {
+        const response = await axios.get(`${API_URL}/orders/my-orders/${orderId}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Lỗi khi lấy chi tiết đơn hàng' };
+    }
+};
+
+/**
+ * User hủy đơn hàng
+ */
+export const cancelMyOrder = async (orderId, reason) => {
+    try {
+        const response = await axios.put(`${API_URL}/orders/${orderId}/cancel`, 
+            { reason },
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Lỗi khi hủy đơn hàng' };
     }
 };
