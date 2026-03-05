@@ -8,7 +8,32 @@ const { protect, authorize } = require('../middlewares/auth');
  * Base URL: /api/orders
  */
 
-// Admin routes - Statistics
+// ===== USER Routes (phải đặt TRƯỚC /:id để tránh conflict) =====
+
+// Tạo đơn hàng mới (Checkout)
+router.post(
+    '/',
+    protect,
+    orderController.createOrder
+);
+
+// Lấy đơn hàng của user hiện tại
+router.get(
+    '/my-orders',
+    protect,
+    orderController.getMyOrders
+);
+
+// Lấy chi tiết đơn hàng của user hiện tại
+router.get(
+    '/my-orders/:id',
+    protect,
+    orderController.getMyOrderDetail
+);
+
+// ===== ADMIN Routes =====
+
+// Admin - Thống kê đơn hàng
 router.get(
     '/stats/overview',
     protect,
@@ -16,7 +41,7 @@ router.get(
     orderController.getOrderStats
 );
 
-// Admin routes - Get all orders
+// Admin - Lấy tất cả đơn hàng
 router.get(
     '/',
     protect,
@@ -24,14 +49,28 @@ router.get(
     orderController.getAllOrders
 );
 
-// Get order by ID (Admin or Owner)
+// Admin - Lấy đơn hàng theo user
+router.get(
+    '/user/:userId',
+    protect,
+    orderController.getUserOrders
+);
+
+// Lấy chi tiết đơn hàng (Admin hoặc Owner)
 router.get(
     '/:id',
     protect,
     orderController.getOrderById
 );
 
-// Update order status (Admin only)
+// User hủy đơn hàng
+router.put(
+    '/:id/cancel',
+    protect,
+    orderController.cancelMyOrder
+);
+
+// Admin - Cập nhật trạng thái đơn hàng
 router.put(
     '/:id/status',
     protect,
@@ -39,7 +78,7 @@ router.put(
     orderController.updateOrderStatus
 );
 
-// Update payment status (Admin only)
+// Admin - Cập nhật trạng thái thanh toán
 router.put(
     '/:id/payment-status',
     protect,
@@ -47,19 +86,12 @@ router.put(
     orderController.updatePaymentStatus
 );
 
-// Add admin note (Admin only)
+// Admin - Thêm ghi chú
 router.put(
     '/:id/admin-note',
     protect,
     authorize('admin'),
     orderController.addAdminNote
-);
-
-// Get user's orders
-router.get(
-    '/user/:userId',
-    protect,
-    orderController.getUserOrders
 );
 
 module.exports = router;

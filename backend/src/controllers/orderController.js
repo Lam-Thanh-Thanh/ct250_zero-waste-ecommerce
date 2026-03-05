@@ -1,6 +1,8 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const orderService = require('../services/orderService');
+const paymentService = require('../services/paymentService');
 
 /**
  * @route   GET /api/orders
@@ -545,6 +547,135 @@ exports.addAdminNote = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Lỗi khi thêm ghi chú'
+        });
+    }
+};
+
+// ===================================================================
+// USER-FACING METHODS (US-11, US-13, US-14)
+// ===================================================================
+
+/**
+ * @route   POST /api/orders
+ * @desc    Tạo đơn hàng mới (Checkout)
+ * @access  Private
+ */
+exports.createOrder = async (req, res) => {
+    try {
+        const { shippingAddress, paymentMethod, customerNote } = req.body;
+
+        // Validate shipping address
+        if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.address) {
+            return res.status(400).json({
+                success: false,
+                message: 'Vui lòng cung cấp đầy đủ thông tin giao hàng (họ tên, SĐT, địa chỉ)'
+            });
+        }
+
+        // Tạo đơn hàng (sử dụng transaction trong orderService)
+        const order = await orderService.createOrder(req.user._id, {
+            shippingAddress,
+            paymentMethod: paymentMethod || 'COD',
+            customerNote
+        });
+
+        // Xử lý thanh toán
+        const paymentResult = await paymentService.processPayment(
+            order._id,
+            paymentMethod || 'COD'
+        );
+
+        res.status(201).json({
+            success: true,
+            message: 'Đặt hàng thành công!',
+            data: {
+                order,
+                payment: paymentResult
+            }
+        });
+    } catch (error) {
+        console.error('Create Order Error:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Lỗi khi tạo đơn hàng'
+        });
+    }
+};
+
+/**
+ * @route   GET /api/orders/my-orders
+ * @desc    Lấy danh sách đơn hàng của user hiện tại
+ * @access  Private
+ */
+exports.getMyOrders = async (req, res) => {
+    try {
+        const result = await orderService.getMyOrders(req.user._id, req.query);
+
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+    } catch (error) {
+        console.error('Get My Orders Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi khi lấy danh sách đơn hàng'
+        });
+    }
+};
+
+/**
+ * @route   GET /api/orders/my-orders/:id
+ * @desc    Lấy chi tiết đơn hàng của user hiện tại
+ * @access  Private
+ */
+exports.getMyOrderDetail = async (req, res) => {
+    try {
+        const order = await orderService.getMyOrderDetail(req.user._id, req.params.id);
+
+        // Lấy thông tin payment
+        const payment = await paymentService.getPaymentByOrder(order._id);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                order,
+                payment
+            }
+        });
+    } catch (error) {
+        console.error('Get My Order Detail Error:', error);
+        res.status(error.message === 'Không tìm thấy đơn hàng' ? 404 : 500).json({
+            success: false,
+            message: error.message || 'Lỗi khi lấy chi tiết đơn hàng'
+        });
+    }
+};
+
+/**
+ * @route   PUT /api/orders/:id/cancel
+ * @desc    User hủy đơn hàng
+ * @access  Private
+ */
+exports.cancelMyOrder = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const order = await orderService.cancelMyOrder(
+            req.user._id,
+            req.params.id,
+            reason
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Đã hủy đơn hàng thành công',
+            data: order
+        });
+    } catch (error) {
+        console.error('Cancel My Order Error:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Lỗi khi hủy đơn hàng'
         });
     }
 };
