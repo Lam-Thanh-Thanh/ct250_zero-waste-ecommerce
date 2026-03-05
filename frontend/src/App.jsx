@@ -15,6 +15,7 @@ import Dashboard from './pages/admin/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
 import CategoryManagement from './pages/admin/CategoryManagement';
 import ProductManagement from './pages/admin/ProductManagement';
+import ProductForm from './pages/admin/ProductForm';
 import PackagingManagement from './pages/admin/Packagingmanagement';
 import CertificateManagement from './pages/admin/CertificateManagement';
 import BannerManagement from './pages/admin/BannerManagement';
@@ -88,6 +89,26 @@ function App() {
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminLayout>
                       <ProductManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/products/add"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <ProductForm />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/products/edit/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <ProductForm />
                     </AdminLayout>
                   </ProtectedRoute>
                 }

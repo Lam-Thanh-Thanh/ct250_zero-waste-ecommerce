@@ -6,7 +6,7 @@ const AdminLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    
+
     // Sidebar collapsed state with localStorage persistence
     const [isCollapsed, setIsCollapsed] = useState(() => {
         const saved = localStorage.getItem('adminSidebarCollapsed');
@@ -27,6 +27,28 @@ const AdminLayout = ({ children }) => {
         navigate('/login');
     };
 
+    // Lock body scroll when admin layout is active — prevents double scrollbar
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+        const prevHtmlOverflow = html.style.overflow;
+        const prevBodyOverflow = body.style.overflow;
+        const prevHtmlHeight = html.style.height;
+        const prevBodyHeight = body.style.height;
+
+        html.style.overflow = 'hidden';
+        html.style.height = '100%';
+        body.style.overflow = 'hidden';
+        body.style.height = '100%';
+
+        return () => {
+            html.style.overflow = prevHtmlOverflow;
+            html.style.height = prevHtmlHeight;
+            body.style.overflow = prevBodyOverflow;
+            body.style.height = prevBodyHeight;
+        };
+    }, []);
+
     const menuItems = [
         {
             name: 'Dashboard',
@@ -38,11 +60,11 @@ const AdminLayout = ({ children }) => {
             )
         },
         {
-            name: 'Banner',
-            path: '/admin/banners',
+            name: 'Đơn hàng',
+            path: '/admin/orders',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
             )
         },
@@ -65,42 +87,6 @@ const AdminLayout = ({ children }) => {
             )
         },
         {
-            name: 'Người dùng',
-            path: '/admin/users',
-            icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-            )
-        },
-        {
-            name: 'Đơn hàng',
-            path: '/admin/orders',
-            icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-            )
-        },
-        {
-            name: 'Đánh giá',
-            path: '/admin/reviews',
-            icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-            )
-        },
-        {
-            name: 'Chatbot AI',
-            path: '/admin/chatbot-config',
-            icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 5l-4-4H9a7 7 0 110-14 7 7 0 017 7v7z" />
-                </svg>
-            )
-        },
-        {
             name: 'Bao bì',
             path: '/admin/packagings',
             icon: (
@@ -117,11 +103,47 @@ const AdminLayout = ({ children }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
             )
-        }
+        },
+        {
+            name: 'Người dùng',
+            path: '/admin/users',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            )
+        },
+        {
+            name: 'Đánh giá',
+            path: '/admin/reviews',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+            )
+        },
+        {
+            name: 'Banner',
+            path: '/admin/banners',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            )
+        },
+        {
+            name: 'Chatbot AI',
+            path: '/admin/chatbot-config',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 5l-4-4H9a7 7 0 110-14 7 7 0 017 7v7z" />
+                </svg>
+            )
+        },
     ];
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="fixed inset-0 flex bg-gray-100">
             {/* Sidebar */}
             <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white shadow-lg transition-all duration-300 ease-in-out flex flex-col`}>
                 {/* Logo/Brand with Toggle */}
@@ -130,7 +152,7 @@ const AdminLayout = ({ children }) => {
                         {/* Logo + Text group */}
                         <div className="flex items-center gap-3 min-w-0">
                             {/* Logo with hover-to-reveal toggle overlay (collapsed only) */}
-                            <div 
+                            <div
                                 className={`group relative w-10 h-10 flex-shrink-0 ${isCollapsed ? 'cursor-pointer' : ''}`}
                                 onClick={isCollapsed ? toggleSidebar : undefined}
                                 title={isCollapsed ? 'Mở rộng sidebar' : ''}
@@ -181,11 +203,10 @@ const AdminLayout = ({ children }) => {
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-all duration-300 ${
-                                    isActive
-                                        ? 'bg-primary-600 text-white'
-                                        : 'text-gray-700 hover:bg-gray-100'
-                                } ${isCollapsed ? 'justify-center px-2' : ''}`}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-all duration-300 ${isActive
+                                    ? 'bg-primary-600 text-white'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                    } ${isCollapsed ? 'justify-center px-2' : ''}`}
                                 title={isCollapsed ? item.name : ''}
                             >
                                 <span className="flex-shrink-0">{item.icon}</span>

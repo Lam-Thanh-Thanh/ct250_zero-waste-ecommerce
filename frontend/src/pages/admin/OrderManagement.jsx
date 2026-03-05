@@ -254,7 +254,7 @@ const OrderManagement = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Chờ xác nhận</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.byStatus?.pending || 0}</p>
+                                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.statusBreakdown?.pending || 0}</p>
                                 </div>
                                 <div className="p-3 bg-yellow-100 rounded-full">
                                     <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +270,7 @@ const OrderManagement = () => {
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Đang xử lý</p>
                                     <p className="text-3xl font-bold text-gray-900 mt-2">
-                                        {(stats.byStatus?.confirmed || 0) + (stats.byStatus?.processing || 0)}
+                                        {(stats.statusBreakdown?.confirmed || 0) + (stats.statusBreakdown?.processing || 0)}
                                     </p>
                                 </div>
                                 <div className="p-3 bg-blue-100 rounded-full">
@@ -286,7 +286,7 @@ const OrderManagement = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Đang giao</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.byStatus?.shipping || 0}</p>
+                                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.statusBreakdown?.shipping || 0}</p>
                                 </div>
                                 <div className="p-3 bg-purple-100 rounded-full">
                                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,7 +301,7 @@ const OrderManagement = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.byStatus?.delivered || 0}</p>
+                                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.statusBreakdown?.delivered || 0}</p>
                                 </div>
                                 <div className="p-3 bg-green-100 rounded-full">
                                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -194,9 +194,10 @@ const CategoryManagement = () => {
 
                 {/* Filters & Actions */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-end justify-between">
                         {/* Search */}
                         <div className="flex-1 max-w-md">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
                             <input
                                 type="text"
                                 placeholder="Tìm kiếm theo tên..."
@@ -206,35 +207,18 @@ const CategoryManagement = () => {
                             />
                         </div>
 
-                        {/* Filters */}
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => handleFilterChange('all')}
-                                className={`px-4 py-2 rounded-lg font-medium ${isActiveFilter === 'all'
-                                        ? 'bg-primary-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                        {/* Status Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                            <select
+                                value={isActiveFilter}
+                                onChange={(e) => handleFilterChange(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             >
-                                Tất cả
-                            </button>
-                            <button
-                                onClick={() => handleFilterChange('true')}
-                                className={`px-4 py-2 rounded-lg font-medium ${isActiveFilter === 'true'
-                                        ? 'bg-primary-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Hoạt động
-                            </button>
-                            <button
-                                onClick={() => handleFilterChange('false')}
-                                className={`px-4 py-2 rounded-lg font-medium ${isActiveFilter === 'false'
-                                        ? 'bg-primary-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Không hoạt động
-                            </button>
+                                <option value="all">Tất cả</option>
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
                         </div>
 
                         {/* Add Button */}

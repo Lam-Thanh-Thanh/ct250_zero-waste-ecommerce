@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
     getProducts,
@@ -13,6 +14,7 @@ import { getAllCertificatesNoPagination } from '../../api/certificateApi';
 import { getAllPackagingsNoPagination } from '../../api/packagingApi';
 
 const ProductManagement = () => {
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [certificates, setCertificates] = useState([]);
@@ -39,6 +41,9 @@ const ProductManagement = () => {
         sortBy: 'createdAt',
         order: 'desc'
     });
+
+    // Advanced filters toggle
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
     // Modal states
     const [showModal, setShowModal] = useState(false);
@@ -444,9 +449,10 @@ const ProductManagement = () => {
                 {/* Filters & Actions */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
                     <div className="space-y-4">
-                        {/* Search & Add Button */}
-                        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                        {/* Row 1: Search + Category + Status + Add Button */}
+                        <div className="flex flex-col md:flex-row gap-4 items-start md:items-end justify-between">
                             <div className="flex-1 max-w-md">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
                                 <input
                                     type="text"
                                     placeholder="Tìm kiếm sản phẩm..."
@@ -455,104 +461,121 @@ const ProductManagement = () => {
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
+                                <select
+                                    value={filters.category}
+                                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                >
+                                    <option value="">Tất cả</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                                <select
+                                    value={filters.isActive}
+                                    onChange={(e) => handleFilterChange('isActive', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                >
+                                    <option value="all">Tất cả</option>
+                                    <option value="true">Hoạt động</option>
+                                    <option value="false">Không hoạt động</option>
+                                </select>
+                            </div>
                             <button
-                                onClick={() => openModal()}
+                                onClick={() => navigate('/admin/products/add')}
                                 className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                             >
                                 + Thêm sản phẩm
                             </button>
                         </div>
 
-                        {/* Filters Row 1 */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <select
-                                value={filters.category}
-                                onChange={(e) => handleFilterChange('category', e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        {/* Row 2: Advanced Filters Toggle + Reset */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                <option value="">Tất cả danh mục</option>
-                                {categories.map((cat) => (
-                                    <option key={cat._id} value={cat._id}>{cat.name}</option>
-                                ))}
-                            </select>
-
-                            <select
-                                value={filters.inStock}
-                                onChange={(e) => handleFilterChange('inStock', e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                <svg className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                                Bộ lọc nâng cao
+                                {(filters.minPrice || filters.maxPrice || filters.inStock !== 'all' || filters.isFeatured !== 'all' || filters.sortBy !== 'createdAt' || filters.order !== 'desc') && (
+                                    <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
+                                )}
+                            </button>
+                            <button
+                                onClick={resetFilters}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
                             >
-                                <option value="all">Tồn kho: Tất cả</option>
-                                <option value="true">Còn hàng</option>
-                                <option value="false">Hết hàng</option>
-                            </select>
-
-                            <select
-                                value={filters.isFeatured}
-                                onChange={(e) => handleFilterChange('isFeatured', e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                            >
-                                <option value="all">Nổi bật: Tất cả</option>
-                                <option value="true">Nổi bật</option>
-                                <option value="false">Không nổi bật</option>
-                            </select>
-
-                            <select
-                                value={filters.isActive}
-                                onChange={(e) => handleFilterChange('isActive', e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                            >
-                                <option value="all">Trạng thái: Tất cả</option>
-                                <option value="true">Hoạt động</option>
-                                <option value="false">Không hoạt động</option>
-                            </select>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Đặt lại bộ lọc
+                            </button>
                         </div>
 
-                        {/* Filters Row 2 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    placeholder="Giá tối thiểu"
-                                    value={filters.minPrice}
-                                    onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Giá tối đa"
-                                    value={filters.maxPrice}
-                                    onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                />
+                        {/* Advanced Filters (collapsible) */}
+                        {showAdvancedFilters && (
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 pt-2 border-t border-gray-200">
+                                <div className="flex gap-2 md:col-span-2">
+                                    <input
+                                        type="number"
+                                        placeholder="Giá tối thiểu"
+                                        value={filters.minPrice}
+                                        onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Giá tối đa"
+                                        value={filters.maxPrice}
+                                        onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                    />
+                                </div>
+                                <select
+                                    value={filters.inStock}
+                                    onChange={(e) => handleFilterChange('inStock', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                >
+                                    <option value="all">Tồn kho: Tất cả</option>
+                                    <option value="true">Còn hàng</option>
+                                    <option value="false">Hết hàng</option>
+                                </select>
+                                <select
+                                    value={filters.isFeatured}
+                                    onChange={(e) => handleFilterChange('isFeatured', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                >
+                                    <option value="all">Nổi bật: Tất cả</option>
+                                    <option value="true">Nổi bật</option>
+                                    <option value="false">Không nổi bật</option>
+                                </select>
+                                <select
+                                    value={filters.sortBy}
+                                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                >
+                                    <option value="createdAt">Sắp xếp: Ngày tạo</option>
+                                    <option value="name">Tên sản phẩm</option>
+                                    <option value="price">Giá</option>
+                                    <option value="stock">Kho</option>
+                                </select>
+                                <select
+                                    value={filters.order}
+                                    onChange={(e) => handleFilterChange('order', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 md:col-start-5"
+                                >
+                                    <option value="desc">Giảm dần</option>
+                                    <option value="asc">Tăng dần</option>
+                                </select>
                             </div>
-
-                            <select
-                                value={filters.sortBy}
-                                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                            >
-                                <option value="createdAt">Ngày tạo</option>
-                                <option value="name">Tên sản phẩm</option>
-                                <option value="price">Giá</option>
-                                <option value="stock">Kho</option>
-                            </select>
-
-                            <select
-                                value={filters.order}
-                                onChange={(e) => handleFilterChange('order', e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                            >
-                                <option value="desc">Giảm dần</option>
-                                <option value="asc">Tăng dần</option>
-                            </select>
-                        </div>
-
-                        <button
-                            onClick={resetFilters}
-                            className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-                        >
-                            Đặt lại bộ lọc
-                        </button>
+                        )}
                     </div>
                 </div>
 
@@ -607,12 +630,32 @@ const ProductManagement = () => {
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-semibold text-gray-900 truncate max-w-[260px]">{product.name}</p>
                                                         <p className="text-xs text-gray-500 mt-0.5">{product.category?.name || '—'}</p>
-                                                        {product.isFeatured && (
-                                                            <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-medium mt-1">
-                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                                                Nổi bật
-                                                            </span>
-                                                        )}
+                                                        <div className="flex items-center gap-1.5 mt-1">
+                                                            {product.isFeatured && (
+                                                                <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-medium">
+                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                                                    Nổi bật
+                                                                </span>
+                                                            )}
+                                                            {/* Packaging icon with tooltip */}
+                                                            {product.packaging && (
+                                                                <span className="relative group/pkg">
+                                                                    <span className="inline-flex items-center justify-center w-5 h-5 text-xs bg-blue-50 text-blue-600 rounded cursor-default" title={product.packaging?.name || 'Bao bì'}>📦</span>
+                                                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/pkg:opacity-100 transition-opacity pointer-events-none z-10">
+                                                                        {product.packaging?.name || 'Bao bì'}
+                                                                    </span>
+                                                                </span>
+                                                            )}
+                                                            {/* Certificates icons with tooltip */}
+                                                            {product.certificates && product.certificates.length > 0 && (
+                                                                <span className="relative group/cert">
+                                                                    <span className="inline-flex items-center justify-center w-5 h-5 text-xs bg-green-50 text-green-600 rounded cursor-default">🏅</span>
+                                                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/cert:opacity-100 transition-opacity pointer-events-none z-10">
+                                                                        {product.certificates.map(c => c.name).join(', ')}
+                                                                    </span>
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -671,7 +714,7 @@ const ProductManagement = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
-                                                        onClick={() => openModal(product)}
+                                                        onClick={() => navigate(`/admin/products/edit/${product._id}`)}
                                                         className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                         title="Sửa"
                                                     >
@@ -738,8 +781,8 @@ const ProductManagement = () => {
                 </div>
             </div>
 
-            {/* Create/Edit Modal */}
-            {showModal && (
+            {/* Create/Edit Modal - COMMENTED OUT: Chuyển sang trang riêng ProductForm.jsx */}
+            {false && showModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
