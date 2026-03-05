@@ -200,11 +200,11 @@ const UserManagement = () => {
 
         {/* Users Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          {/* <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
               Danh sách người dùng ({pagination.totalUsers})
             </h2>
-          </div>
+          </div> */}
 
           {loading ? (
             <div className="p-12 text-center">

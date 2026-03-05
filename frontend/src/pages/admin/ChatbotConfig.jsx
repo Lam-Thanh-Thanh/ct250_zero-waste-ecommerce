@@ -7,6 +7,7 @@ const ChatbotConfig = () => {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showTips, setShowTips] = useState(false);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -77,172 +78,223 @@ const ChatbotConfig = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Cấu hình Chatbot AI</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Quản lý prompt và hành vi tư vấn văn bản cho khách vãng lai và khách đã đăng nhập.
-            </p>
-          </div>
-          <Link
-            to="/admin/chatbot-faqs"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-sm font-medium"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 5l-4-4H9a7 7 0 110-14 7 7 0 017 7v7z"
-              />
-            </svg>
-            Quản lý câu hỏi–trả lời mẫu
-          </Link>
-        </div>
-
-        {/* Info cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm border border-emerald-50 p-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">
-              Mục tiêu chatbot
-            </h2>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Chatbot được thiết kế để tư vấn <span className="font-semibold">bằng văn bản</span>, không xử lý giọng
-              nói. Với khách vãng lai, tập trung giải thích lợi ích sản phẩm zero-waste và gợi ý mẹo sống xanh cơ bản.
-              Với khách đã đăng nhập, ưu tiên tư vấn sản phẩm phù hợp với nhu cầu cá nhân và gợi ý thói quen sống xanh
-              cụ thể dựa trên thông tin người dùng.
-            </p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-emerald-50 p-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">
-              Gợi ý viết prompt
-            </h2>
-            <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
-              <li>Viết bằng tiếng Việt, rõ ràng, định nghĩa rõ vai trò của chatbot.</li>
-              <li>Hạn chế khẳng định về sức khoẻ/y tế; khuyến khích người dùng kiểm tra thông tin quan trọng.</li>
-              <li>Nhấn mạnh thái độ thân thiện, khuyến khích lối sống xanh đơn giản, dễ áp dụng.</li>
-              <li>Không yêu cầu hoặc xử lý âm thanh, chỉ tập trung trả lời văn bản.</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+        <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Thiết lập chung
-              </h2>
-              <p className="text-xs text-gray-600 mt-1">
-                Bật/tắt chatbot, cấu hình ngôn ngữ và số lượng tin nhắn lịch sử được sử dụng.
-              </p>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-gray-900">Cấu hình Chatbot</h1>
+                <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${config.enabled
+                  ? 'text-primary-700 bg-primary-50'
+                  : 'text-gray-500 bg-gray-100'
+                  }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${config.enabled ? 'bg-primary-500' : 'bg-gray-400'}`} />
+                  {config.enabled ? 'Đang hoạt động' : 'Đã tắt'}
+                </span>
+              </div>
+              <p className="text-gray-600 mt-1">Quản lý prompt hệ thống và thiết lập hành vi chatbot</p>
             </div>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center cursor-pointer">
-                <span className="mr-2 text-sm text-gray-700">Trạng thái</span>
-                <div className="relative inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={!!config.enabled}
-                    onChange={(e) => handleChange('enabled', e.target.checked)}
-                  />
-                  <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors" />
-                  <div className={`absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform ${config.enabled ? 'translate-x-5' : ''}`} />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowTips(!showTips)}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Hướng dẫn
+              </button>
+              <Link
+                to="/admin/chatbot-faqs"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 5l-4-4H9a7 7 0 110-14 7 7 0 017 7v7z" />
+                </svg>
+                Quản lý FAQ
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Tips - Collapsible */}
+        {showTips && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Mục tiêu chatbot
+                </h3>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Chatbot tư vấn <span className="font-medium">bằng văn bản</span>, không xử lý giọng nói.
+                  Với khách vãng lai — giải thích lợi ích zero-waste, gợi ý mẹo sống xanh.
+                  Với khách đã đăng nhập — tư vấn cá nhân hoá dựa trên thông tin người dùng.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  Gợi ý viết prompt
+                </h3>
+                <ul className="text-xs text-gray-600 space-y-1.5">
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-gray-400 mt-0.5">•</span>
+                    Viết bằng tiếng Việt, rõ ràng, định nghĩa rõ vai trò chatbot
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-gray-400 mt-0.5">•</span>
+                    Hạn chế khẳng định về sức khoẻ/y tế
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-gray-400 mt-0.5">•</span>
+                    Nhấn mạnh thái độ thân thiện, khuyến khích lối sống xanh
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-gray-400 mt-0.5">•</span>
+                    Chỉ tập trung trả lời văn bản, không yêu cầu xử lý âm thanh
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* General Settings Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900">Thiết lập chung</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Bật/tắt chatbot</p> {/* cấu hình ngôn ngữ và số tin nhắn lịch sử */}
+            </div>
+            <div className="px-5 py-4">
+              <div className="flex flex-wrap items-center gap-6">
+                {/* Toggle */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-700">Trạng thái</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={!!config.enabled}
+                      onChange={(e) => handleChange('enabled', e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-primary-500 transition-colors" />
+                    <div className={`absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform ${config.enabled ? 'translate-x-5' : ''}`} />
+                  </label>
+                  <span className={`text-xs font-medium ${config.enabled ? 'text-primary-600' : 'text-gray-400'}`}>
+                    {config.enabled ? 'Bật' : 'Tắt'}
+                  </span>
                 </div>
-              </label>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700">Ngôn ngữ:</label>
-                <select
-                  value={config.language || 'vi'}
-                  onChange={(e) => handleChange('language', e.target.value)}
-                  className="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="en">Tiếng Anh</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 whitespace-nowrap">
-                  Số tin nhắn lịch sử:
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={config.maxHistoryMessages ?? 10}
-                  onChange={(e) => handleChange('maxHistoryMessages', e.target.value)}
-                  className="w-20 text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+
+                {/* Tạm ẩn: Ngôn ngữ & Số tin nhắn lịch sử (chưa cần dùng)
+                <div className="w-px h-8 bg-gray-200 hidden md:block" />
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Ngôn ngữ</label>
+                  <select
+                    value={config.language || 'vi'}
+                    onChange={(e) => handleChange('language', e.target.value)}
+                    className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                  >
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">Tiếng Anh</option>
+                  </select>
+                </div>
+                <div className="w-px h-8 bg-gray-200 hidden md:block" />
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Số tin nhắn lịch sử</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={config.maxHistoryMessages ?? 10}
+                    onChange={(e) => handleChange('maxHistoryMessages', e.target.value)}
+                    className="w-20 text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                */}
               </div>
             </div>
           </div>
 
+          {/* Prompt Editors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Guest prompt */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Prompt cho khách vãng lai
-                </label>
-                <span className="text-[11px] text-gray-500">
-                  Đối tượng: khách chưa đăng nhập
-                </span>
+            {/* Guest Prompt */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-gray-900">Prompt khách vãng lai</h2>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Chưa đăng nhập
+                  </span>
+                </div>
               </div>
-              <textarea
-                value={config.systemPromptGuest || ''}
-                onChange={(e) => handleChange('systemPromptGuest', e.target.value)}
-                rows={10}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Ví dụ: Bạn là chatbot tư vấn về lối sống xanh và sản phẩm zero-waste cho khách truy cập chưa đăng nhập..."
-              />
-              <p className="mt-1 text-[11px] text-gray-500">
-                Nên tập trung: giải thích lợi ích sản phẩm zero-waste, khái niệm cơ bản, mẹo sống xanh đơn giản, không cá nhân hoá theo từng người dùng.
-              </p>
+              <div className="p-5">
+                <textarea
+                  value={config.systemPromptGuest || ''}
+                  onChange={(e) => handleChange('systemPromptGuest', e.target.value)}
+                  rows={12}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y leading-relaxed"
+                  placeholder="Ví dụ: Bạn là chatbot tư vấn về lối sống xanh và sản phẩm zero-waste cho khách truy cập chưa đăng nhập..."
+                />
+                <p className="mt-2 text-xs text-gray-400">
+                  Nên tập trung: giải thích lợi ích sản phẩm zero-waste, khái niệm cơ bản, mẹo sống xanh đơn giản.
+                </p>
+              </div>
             </div>
 
-            {/* Logged-in user prompt */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Prompt cho khách đã đăng nhập
-                </label>
-                <span className="text-[11px] text-gray-500">
-                  Đối tượng: người dùng đã đăng nhập
-                </span>
+            {/* User Prompt */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-gray-900">Prompt khách đã đăng nhập</h2>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-primary-50 text-primary-700">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Đã đăng nhập
+                  </span>
+                </div>
               </div>
-              <textarea
-                value={config.systemPromptUser || ''}
-                onChange={(e) => handleChange('systemPromptUser', e.target.value)}
-                rows={10}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Ví dụ: Bạn là trợ lý cá nhân hóa cho khách hàng đã đăng nhập của website bán sản phẩm zero-waste..."
-              />
-              <p className="mt-1 text-[11px] text-gray-500">
-                Nên tận dụng: tên người dùng, điểm xanh, lịch sử đơn hàng (nếu backend bổ sung) để gợi ý sản phẩm và thói quen sống xanh cụ thể, vẫn giữ thái độ trung lập và an toàn.
-              </p>
+              <div className="p-5">
+                <textarea
+                  value={config.systemPromptUser || ''}
+                  onChange={(e) => handleChange('systemPromptUser', e.target.value)}
+                  rows={12}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y leading-relaxed"
+                  placeholder="Ví dụ: Bạn là trợ lý cá nhân hóa cho khách hàng đã đăng nhập của website bán sản phẩm zero-waste..."
+                />
+                <p className="mt-2 text-xs text-gray-400">
+                  Nên tận dụng: tên người dùng, điểm xanh, lịch sử đơn hàng để gợi ý sản phẩm và thói quen sống xanh cụ thể.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-            <p className="text-[11px] text-gray-500">
-              Lưu ý: Chatbot chỉ tư vấn bằng văn bản, không thu âm hay xử lý giọng nói của người dùng.
-            </p>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving && (
-                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              )}
-              Lưu cấu hình
-            </button>
+          {/* Footer */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-5 py-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400">
+                Chatbot chỉ tư vấn bằng văn bản, không thu âm hay xử lý giọng nói.
+              </p>
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {saving && (
+                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                )}
+                {saving ? 'Đang lưu...' : 'Lưu cấu hình'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -251,4 +303,3 @@ const ChatbotConfig = () => {
 };
 
 export default ChatbotConfig;
-

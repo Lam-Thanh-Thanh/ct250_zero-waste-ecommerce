@@ -181,55 +181,52 @@ const PackagingManagement = () => {
 
                 {/* Filters & Actions */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-                    <div className="flex flex-col gap-4">
-                        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                            {/* Search */}
-                            <div className="flex-1 max-w-md">
-                                <input
-                                    type="text"
-                                    placeholder="Tìm kiếm theo tên hoặc chất liệu..."
-                                    value={search}
-                                    onChange={handleSearch}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            {/* Add Button */}
-                            <button
-                                onClick={() => openModal()}
-                                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                            >
-                                + Thêm bao bì
-                            </button>
+                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-end justify-between">
+                        {/* Search */}
+                        <div className="flex-1 max-w-md">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm theo tên hoặc chất liệu..."
+                                value={search}
+                                onChange={handleSearch}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            />
                         </div>
 
                         {/* Filters */}
-                        <div className="flex gap-4 flex-wrap">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                                <select
-                                    value={isActiveFilter}
-                                    onChange={(e) => setIsActiveFilter(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                >
-                                    <option value="all">Tất cả</option>
-                                    <option value="true">Hoạt động</option>
-                                    <option value="false">Không hoạt động</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Phân hủy</label>
-                                <select
-                                    value={biodegradableFilter}
-                                    onChange={(e) => setBiodegradableFilter(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                >
-                                    <option value="all">Tất cả</option>
-                                    <option value="true">Phân hủy sinh học</option>
-                                    <option value="false">Không phân hủy</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                            <select
+                                value={isActiveFilter}
+                                onChange={(e) => setIsActiveFilter(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            >
+                                <option value="all">Tất cả</option>
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phân hủy</label>
+                            <select
+                                value={biodegradableFilter}
+                                onChange={(e) => setBiodegradableFilter(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            >
+                                <option value="all">Tất cả</option>
+                                <option value="true">Phân hủy sinh học</option>
+                                <option value="false">Không phân hủy</option>
+                            </select>
+                        </div>
+
+                        {/* Add Button */}
+                        <button
+                            onClick={() => openModal()}
+                            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                        >
+                            + Thêm bao bì
+                        </button>
                     </div>
                 </div>
 

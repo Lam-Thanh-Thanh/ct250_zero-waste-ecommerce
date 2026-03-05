@@ -208,9 +208,10 @@ const CertificateManagement = () => {
 
                 {/* Filters & Actions */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-end justify-between">
                         {/* Search */}
                         <div className="flex-1 max-w-md">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
                             <input
                                 type="text"
                                 placeholder="Tìm kiếm theo tên hoặc tổ chức..."
