@@ -5,6 +5,8 @@ import { useCart } from '../contexts/CartContext';
 import { getProducts } from '../api/productApi';
 import { toast } from 'react-toastify';
 import { FiShoppingCart, FiStar, FiPackage } from 'react-icons/fi';
+import DynamicBanner from '../components/DynamicBanner';
+
 
 const Home = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -142,6 +144,82 @@ const Home = () => {
           )}
         </div>
       </section>
+
+
+      {/* Dynamic Banner */}
+      <section>
+         <div>
+           <DynamicBanner/>
+         </div>
+      </section>
+
+      {/* Mid Banner */}
+      <section>
+        <div className='flex flex-col sm:flex-row border border-gray-400 '>
+          {/* Hero left side */}
+        <div className='w-full sm:w-1/2 flex items-center justify-center py-10 sm:py-0 '>
+            <div className='text-[#414141]'>
+                <div className='flex items-center gap-2'>
+                    <p className='w-8 md:w-11 h-[2px] bg-[#414141] '></p>
+                    <p className='font-medium text-sm md:text-base '>OUR BESTSELLERS</p>
+                </div>
+                <h1 className='text-3xl sm:py-3 lg:text-5xl leading-relaxed '>Latest Arrivals</h1>
+                <div className='flex items-center gap-2'>
+                     <p className='font-semibold text-sm md:text-base'>SHOP NN</p>
+                     <p className='w-8 md:w-11 h-[1px] bg-[#414141]'></p>
+                </div>
+            </div>
+        </div>
+          {/* Hero right side */}
+        <img className='w-full sm:w-1/2' src="https://joyfood.com.vn/upload/filemanager/files/zero-waste-la-gi%20(1).jpeg" alt="" />
+    </div>
+      </section>
+      
+      {/* Bottom Banner */}
+        <section className="relative w-full h-[500 md:h-[600px] overflow-hidden bg-gray-900">
+  
+      <div className="absolute inset-0">
+        <img
+          src="https://shopequo.com/cdn/shop/articles/Zero-Waste.png?v=1701594321&width=1600"
+          alt="New Collection"
+          className="w-full h-full object-cover opacity-60"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/35 to-transparent" />
+      </div>
+
+      <div className="relative h-full max-w-7xl mx-auto px-6 flex flex-col justify-center items-start text-white">
+
+        <span className="inline-block px-4 py-1 mb-4 text-sm font-semibold tracking-widest uppercase bg-indigo-600 rounded-full animate-fade-in">
+          New Season Arrival
+        </span>
+
+        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight max-w-2xl">
+          Define Your <span className="text-indigo-400"> Zero Waste</span> life .
+        </h1>
+
+        <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-lg leading-relaxed">
+          “Không Rác Thải” Vai Trò, Nguyên Tắc Thực Hành Không Lãng Phí <span className="text-white font-bold text-2xl">bảo vệ nguồn tài nguyên, giảm ô nhiễm môi trường</span> .
+        </p>
+        <Link to="/productlist" >
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <button className="px-8 py-4 bg-white text-black font-bold rounded-lg hover:bg-indigo-600 hover:text-white transition-all duration-300 transform hover:-translate-y-1 shadow-lg">
+            Shop Collection
+          </button>
+          
+        </div>
+        </Link>
+        <div className="mt-12 flex gap-8 text-sm text-gray-400">
+          <div className="flex items-center gap-2">
+            <span className="text-indigo-400 font-bold">✓</span> Free Shipping
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-indigo-400 font-bold">✓</span> 30-Day Returns
+          </div>
+        </div>
+      </div>
+    </section>
+       
+
 
       {/* Products Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
