@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const Promotion = require('../models/Promotion');
 const orderService = require('../services/orderService');
 const paymentService = require('../services/paymentService');
 
@@ -254,6 +255,14 @@ exports.updateOrderStatus = async (req, res) => {
             for (const item of order.items) {
                 await Product.findByIdAndUpdate(item.product, {
                     $inc: { stock: item.quantity }
+                });
+            }
+
+            // Hoàn lại mã giảm giá nếu có sử dụng
+            if (order.promotion) {
+                await Promotion.findByIdAndUpdate(order.promotion, {
+                    $inc: { usedCount: -1 },
+                    $pull: { usedBy: order.user }
                 });
             }
         }
@@ -562,7 +571,7 @@ exports.addAdminNote = async (req, res) => {
  */
 exports.createOrder = async (req, res) => {
     try {
-        const { shippingAddress, paymentMethod, customerNote } = req.body;
+        const { shippingAddress, paymentMethod, customerNote, promotionCode } = req.body;
 
         // Validate shipping address
         if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.address) {
@@ -576,7 +585,8 @@ exports.createOrder = async (req, res) => {
         const order = await orderService.createOrder(req.user._id, {
             shippingAddress,
             paymentMethod: paymentMethod || 'COD',
-            customerNote
+            customerNote,
+            promotionCode
         });
 
         // Xử lý thanh toán

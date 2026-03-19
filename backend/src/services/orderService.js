@@ -4,6 +4,7 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Payment = require('../models/Payment');
 const User = require('../models/User');
+const Promotion = require('../models/Promotion');
 
 /**
  * Order Service
@@ -78,19 +79,53 @@ class OrderService {
         // 3. Tính phí vận chuyển
         const shippingCost = this._calculateShippingCost(subtotal, shippingAddress);
 
-        // 4. Tính tổng tiền
-        const totalAmount = subtotal + shippingCost;
+        // 4. Xử lý mã giảm giá (Promotion)
+        let promotionId = null;
+        let promotionCode = null;
+        let promotionDiscount = 0;
 
-        // 5. Tính eco points (1 point / 100.000 VND)
+        if (orderData.promotionCode) {
+            const promotion = await Promotion.findOne({
+                code: orderData.promotionCode.toUpperCase(),
+                usedBy: { $ne: userId } // Thêm điều kiện chưa được sử dụng bởi user này
+            });
+
+            if (promotion && promotion.isValid) {
+                // Kiểm tra đơn tối thiểu
+                if (subtotal >= promotion.minOrderAmount) {
+                    // Tính giá trị giảm
+                    if (promotion.type === 'percentage') {
+                        promotionDiscount = Math.round(subtotal * promotion.discountValue / 100);
+                    } else {
+                        promotionDiscount = promotion.discountValue;
+                    }
+                    // Không giảm quá subtotal
+                    if (promotionDiscount > subtotal) {
+                        promotionDiscount = subtotal;
+                    }
+
+                    promotionId = promotion._id;
+                    promotionCode = promotion.code;
+                }
+            }
+        }
+
+        // 5. Tính tổng tiền
+        const totalAmount = subtotal - promotionDiscount + shippingCost;
+
+        // 6. Tính eco points (1 point / 100.000 VND)
         const ecoPointsEarned = Math.floor(totalAmount / 100000);
 
-        // 6. Tạo đơn hàng
+        // 7. Tạo đơn hàng
         const savedOrder = await Order.create({
             user: userId,
             items: orderItems,
             subtotal,
             shippingCost,
             discount: 0,
+            promotion: promotionId,
+            promotionCode: promotionCode,
+            promotionDiscount: promotionDiscount,
             totalAmount,
             shippingAddress: {
                 fullName: shippingAddress.fullName,
@@ -155,6 +190,14 @@ class OrderService {
 
         // 10. Cập nhật totalOrders cho user
         await User.findByIdAndUpdate(userId, { $inc: { totalOrders: 1 } });
+
+        // 11. Tăng usedCount và thêm user vào danh sách đã sử dụng cho promotion (nếu có)
+        if (promotionId) {
+            await Promotion.findByIdAndUpdate(promotionId, { 
+                $inc: { usedCount: 1 },
+                $push: { usedBy: userId }
+            });
+        }
 
         return savedOrder;
     }
@@ -264,6 +307,14 @@ class OrderService {
                     $set: { inStock: true }
                 }
             );
+        }
+
+        // Hoàn lại mã giảm giá nếu có
+        if (order.promotion) {
+            await Promotion.findByIdAndUpdate(order.promotion, {
+                $inc: { usedCount: -1 },
+                $pull: { usedBy: userId }
+            });
         }
 
         // Cập nhật Payment status
