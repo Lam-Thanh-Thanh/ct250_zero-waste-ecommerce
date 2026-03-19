@@ -109,6 +109,11 @@ const Register = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+              <Link to="/">
+                <img src="/Zero-Waste Store.png" alt="Logo" className="h-20 w-auto object-contain hover:scale-105 transition-transform" />
+              </Link>
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Tạo tài khoản
             </h1>

@@ -201,9 +201,9 @@ const Checkout = () => {
 
   // Payment methods config
   const paymentMethods = [
-    { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵', description: 'Thanh toán bằng tiền mặt khi nhận hàng' },
-    { value: 'Momo', label: 'Ví MoMo', icon: '🟣', description: 'Thanh toán qua ví điện tử MoMo' },
-    { value: 'VNPay', label: 'VNPay', icon: '🏧', description: 'Thanh toán qua cổng VNPay (ATM/Internet Banking)' }
+    { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: <span className="text-3xl">💵</span>, description: 'Thanh toán bằng tiền mặt khi nhận hàng' },
+    { value: 'Momo', label: 'Ví MoMo', icon: <img src="/momo.webp" alt="MoMo" className="h-8 w-auto object-contain" />, description: 'Thanh toán qua ví điện tử MoMo' },
+    { value: 'VNPay', label: 'VNPay', icon: <img src="/VNPAY.png" alt="VNPay" className="h-8 w-auto object-contain" />, description: 'Thanh toán qua cổng VNPay (ATM/Internet Banking)' }
   ];
 
   // ===== Success Screen =====
@@ -261,9 +261,7 @@ const Checkout = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link to="/" className="flex items-center">
-              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+              <img src="/Zero-Waste Store.png" alt="Logo" className="h-10 w-auto object-contain" />
               <span className="ml-2 text-xl font-bold text-gray-800">Zero-Waste Store</span>
             </Link>
             <div className="flex items-center space-x-4">
@@ -403,7 +401,7 @@ const Checkout = () => {
                         onChange={(e) => setPaymentMethod(e.target.value)}
                         className="sr-only"
                       />
-                      <span className="text-2xl mr-3">{method.icon}</span>
+                      <div className="mr-4 flex items-center justify-center w-10 h-10">{method.icon}</div>
                       <div className="flex-grow">
                         <p className="font-medium text-gray-900">{method.label}</p>
                         <p className="text-sm text-gray-500">{method.description}</p>
