@@ -590,10 +590,15 @@ exports.createOrder = async (req, res) => {
         });
 
         // Xử lý thanh toán
-        const paymentResult = await paymentService.processPayment(
-            order._id,
-            paymentMethod || 'COD'
-        );
+        // VNPay: KHÔNG gọi processPayment ở đây vì thanh toán sẽ được xử lý
+        // sau khi user thanh toán trên cổng VNPay (qua return URL / IPN)
+        let paymentResult = null;
+        if (paymentMethod !== 'VNPay') {
+            paymentResult = await paymentService.processPayment(
+                order._id,
+                paymentMethod || 'COD'
+            );
+        }
 
         res.status(201).json({
             success: true,

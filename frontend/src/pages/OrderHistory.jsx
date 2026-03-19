@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getMyOrders, getMyOrderDetail, cancelMyOrder } from '../api/orderApi';
+import { retryVNPayPayment } from '../api/vnpayApi';
 import { toast } from 'react-toastify';
-import { FiArrowLeft, FiPackage, FiTruck, FiCheck, FiX, FiClock, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiArrowLeft, FiPackage, FiTruck, FiCheck, FiX, FiClock, FiChevronDown, FiChevronUp, FiCreditCard } from 'react-icons/fi';
 
 // Status config
 const STATUS_CONFIG = {
@@ -35,6 +36,7 @@ const OrderHistory = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [orderDetail, setOrderDetail] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(null);
+  const [retryLoading, setRetryLoading] = useState(null);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -105,6 +107,24 @@ const OrderHistory = () => {
       toast.error(error.message || 'Lỗi khi hủy đơn hàng');
     } finally {
       setCancelLoading(null);
+    }
+  };
+
+  // Xử lý thanh toán lại VNPay
+  const handleRetryPayment = async (orderId) => {
+    try {
+      setRetryLoading(orderId);
+      const result = await retryVNPayPayment({ orderId });
+      if (result.success && result.data.paymentUrl) {
+        toast.info('Đang chuyển hướng đến cổng thanh toán VNPay...');
+        window.location.href = result.data.paymentUrl;
+      } else {
+        toast.error('Không thể tạo link thanh toán');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Lỗi khi tạo thanh toán lại');
+    } finally {
+      setRetryLoading(null);
     }
   };
 
@@ -411,9 +431,26 @@ const OrderHistory = () => {
                       </div>
                     )}
 
-                    {/* Cancel Button */}
+                    {/* Action Buttons */}
                     {['pending', 'confirmed'].includes(order.status) && (
-                      <div className="text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        {/* Nút Thanh toán lại: hiển thị khi VNPay + chưa thanh toán/thất bại */}
+                        {order.paymentMethod === 'VNPay' && 
+                         ['pending', 'failed'].includes(order.paymentStatus) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRetryPayment(order._id);
+                            }}
+                            disabled={retryLoading === order._id}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
+                          >
+                            <FiCreditCard />
+                            {retryLoading === order._id ? 'Đang xử lý...' : 'Thanh toán lại'}
+                          </button>
+                        )}
+
+                        {/* Nút Hủy đơn */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -457,7 +494,7 @@ const OrderHistory = () => {
       <footer className="bg-gray-800 text-white mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <p>&copy; 2024 Zero-Waste Store. All rights reserved.</p>
+            <p>&copy; 2026 Zero-Waste Store. All rights reserved.</p>
             <p className="mt-2 text-gray-400 text-sm">
               Sản phẩm đồ án niên luận ngành Kỹ thuật phần mềm
             </p>

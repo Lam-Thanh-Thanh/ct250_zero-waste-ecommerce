@@ -1,5 +1,9 @@
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
+const { OAuth2Client } = require('google-auth-library');
+
+// Khởi tạo Google OAuth2 Client để verify token
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 class AuthService {
   /**
@@ -202,6 +206,106 @@ class AuthService {
     await user.save();
     
     return { message: 'Xóa tài khoản thành công' };
+  }
+
+  /**
+   * Đăng nhập bằng Google OAuth2
+   * @param {String} credential - Google ID Token (credential) từ frontend
+   * @returns {Object} { user, token }
+   *
+   * Flow:
+   * 1. Verify token với Google → lấy thông tin user (email, name, picture, googleId)
+   * 2. Tìm user trong DB theo googleId hoặc email
+   * 3. Tạo mới nếu chưa có, hoặc liên kết googleId nếu email đã tồn tại
+   * 4. Sinh JWT token của hệ thống và trả về
+   */
+  async googleLogin(credential) {
+    // Bước 1: Verify Google ID Token
+    // Google sẽ trả về payload chứa thông tin user nếu token hợp lệ
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID // Đảm bảo token được cấp cho app của mình
+      });
+      payload = ticket.getPayload();
+    } catch (error) {
+      throw new Error('Token Google không hợp lệ hoặc đã hết hạn');
+    }
+
+    // Bước 2: Trích xuất thông tin từ Google payload
+    const { sub: googleId, email, name, picture } = payload;
+    // sub = Google Account ID (unique cho mỗi user)
+    // email = Email đã xác thực bởi Google
+    // name = Tên hiển thị
+    // picture = URL ảnh đại diện
+
+    // Bước 3: Tìm user trong database
+    // Ưu tiên tìm theo googleId trước, sau đó theo email
+    let user = await User.findOne({
+      $or: [
+        { googleId },      // User đã đăng nhập Google trước đó
+        { email: email }    // User đã đăng ký bằng email thường
+      ]
+    });
+
+    if (user) {
+      // User đã tồn tại
+      if (!user.googleId) {
+        // Trường hợp: User đã đăng ký bằng email/password trước đó
+        // → Liên kết tài khoản Google vào tài khoản hiện có
+        user.googleId = googleId;
+        if (!user.avatar && picture) {
+          user.avatar = picture; // Cập nhật avatar nếu chưa có
+        }
+      }
+
+      // Kiểm tra tài khoản có bị khóa không
+      if (!user.isActive) {
+        throw new Error('Tài khoản đã bị khóa. Vui lòng liên hệ admin.');
+      }
+
+      // Cập nhật thời gian đăng nhập
+      user.lastLogin = new Date();
+      await user.save();
+    } else {
+      // Bước 4: Tạo user mới (đăng nhập Google lần đầu)
+      // Tạo username từ email (phần trước @) + random suffix để tránh trùng
+      const emailPrefix = email.split('@')[0];
+      const randomSuffix = Math.floor(Math.random() * 10000);
+      let username = emailPrefix;
+
+      // Kiểm tra username đã tồn tại chưa, nếu có thì thêm suffix
+      const existingUsername = await User.findOne({ username });
+      if (existingUsername) {
+        username = `${emailPrefix}_${randomSuffix}`;
+      }
+
+      user = await User.create({
+        username,
+        email,
+        googleId,
+        authProvider: 'google',  // Đánh dấu đây là tài khoản Google
+        avatar: picture || null,
+        role: 'user',
+        isActive: true,
+        ecoPoints: 0,
+        lastLogin: new Date()
+        // Không cần password vì đăng nhập bằng Google
+      });
+    }
+
+    // Bước 5: Sinh JWT token của hệ thống
+    const token = generateToken({
+      userId: user._id,
+      role: user.role
+    });
+
+    // Trả về user (không bao gồm password) và token
+    return {
+      user: user.toPublicJSON(),
+      token
+    };
   }
 }
 

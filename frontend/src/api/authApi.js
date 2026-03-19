@@ -62,6 +62,16 @@ const authApi = {
    */
   deleteAccount: () => {
     return axiosInstance.delete('/auth/account');
+  },
+
+  /**
+   * Đăng nhập bằng Google OAuth2
+   * Gửi credential token (ID Token) từ Google lên backend để xác thực
+   * @param {String} credential - Google ID Token
+   * @returns {Promise}
+   */
+  googleLogin: (credential) => {
+    return axiosInstance.post('/auth/google', { credential });
   }
 };
 

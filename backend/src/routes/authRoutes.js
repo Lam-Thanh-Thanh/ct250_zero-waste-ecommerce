@@ -26,6 +26,13 @@ router.post('/register', validate(registerSchema), authController.register);
  */
 router.post('/login', validate(loginSchema), authController.login);
 
+/**
+ * @route   POST /api/auth/google
+ * @desc    Đăng nhập bằng Google OAuth2
+ * @access  Public
+ */
+router.post('/google', authController.googleLogin);
+
 // ===== PRIVATE ROUTES (cần đăng nhập) =====
 
 /**

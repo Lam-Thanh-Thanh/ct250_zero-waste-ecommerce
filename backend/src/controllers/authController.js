@@ -166,3 +166,37 @@ exports.logout = async (req, res) => {
     });
   }
 };
+
+/**
+ * @route   POST /api/auth/google
+ * @desc    Đăng nhập bằng Google OAuth2
+ * @access  Public
+ */
+exports.googleLogin = async (req, res) => {
+  try {
+    // Nhận credential token từ Google (frontend gửi lên)
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu credential token từ Google'
+      });
+    }
+
+    // Gọi service để verify token và xử lý đăng nhập
+    const result = await authService.googleLogin(credential);
+
+    res.status(200).json({
+      success: true,
+      message: 'Đăng nhập bằng Google thành công',
+      data: result
+    });
+  } catch (error) {
+    console.error('Google Login Error:', error);
+    res.status(401).json({
+      success: false,
+      message: error.message || 'Đăng nhập bằng Google thất bại'
+    });
+  }
+};

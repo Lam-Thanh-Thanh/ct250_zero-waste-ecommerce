@@ -23,7 +23,11 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Vui lòng nhập mật khẩu'],
+    // Password chỉ bắt buộc khi đăng ký bằng email/password (local)
+    // Khi đăng nhập bằng Google thì không cần password
+    required: function() {
+      return this.authProvider === 'local';
+    },
     minlength: [6, 'Mật khẩu phải có ít nhất 6 ký tự'],
     select: false // Không trả về password khi query
   },
@@ -63,6 +67,19 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: null
+  },
+  // ===== Google OAuth =====
+  // ID tài khoản Google (sub claim từ Google ID Token)
+  googleId: {
+    type: String,
+    default: null,
+    sparse: true
+  },
+  // Phương thức đăng ký: 'local' (email/password) hoặc 'google' (Google OAuth)
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
   }
 }, {
   timestamps: true // Tự động tạo createdAt và updatedAt
@@ -70,6 +87,8 @@ const userSchema = new mongoose.Schema({
 
 // ===== MIDDLEWARE: Hash password trước khi lưu =====
 userSchema.pre('save', async function () {
+  // Bỏ qua nếu không có password (ví dụ: user Google)
+  if (!this.password) return;
   // Chỉ hash nếu password được modify
   if (!this.isModified('password')) return;
 
@@ -96,5 +115,6 @@ userSchema.methods.toPublicJSON = function() {
 // ===== INDEX: Tối ưu query =====
 userSchema.index({ email: 1 });
 userSchema.index({ username: 1 });
+userSchema.index({ googleId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('User', userSchema);

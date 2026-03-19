@@ -3,11 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 import { FiEye, FiEyeOff, FiMail, FiLock } from 'react-icons/fi';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -215,6 +216,33 @@ const Login = () => {
                 <span className="px-2 bg-white text-gray-500">Hoặc</span>
               </div>
             </div>
+          </div>
+
+          {/* Google Login Button */}
+          <div className="mt-6 flex justify-center">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                // credentialResponse.credential chứa Google ID Token
+                try {
+                  const result = await loginWithGoogle(credentialResponse.credential);
+                  if (result.success) {
+                    toast.success('Đăng nhập bằng Google thành công!');
+                    navigate(from, { replace: true });
+                  } else {
+                    toast.error(result.message || 'Đăng nhập bằng Google thất bại');
+                  }
+                } catch (error) {
+                  toast.error('Đã xảy ra lỗi khi đăng nhập bằng Google');
+                }
+              }}
+              onError={() => {
+                toast.error('Đăng nhập bằng Google thất bại');
+              }}
+              text="signin_with"
+              shape="rectangular"
+              width="100%"
+              locale="vi_VN"
+            />
           </div>
 
           {/* Register Link */}
