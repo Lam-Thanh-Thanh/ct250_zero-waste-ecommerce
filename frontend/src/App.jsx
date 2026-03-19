@@ -10,10 +10,12 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
-import Promotions from './pages/Promotions';
+import ProductList from './pages/ProductList';
+import ProductDetail from './pages/ProductDetail';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -36,6 +38,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AdminLayout from './components/layout/AdminLayout';
 import ChatbotWidget from './components/chatbot/ChatbotWidget';
 
+
 function App() {
   return (
     <ErrorBoundary>
@@ -48,6 +51,8 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/productlist" element={<ProductList />} />
+              <Route path="/productdetail" element={<ProductDetail/>} />
 
               {/* Protected Routes */}
               <Route
