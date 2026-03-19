@@ -13,7 +13,7 @@ const OrderManagement = () => {
     const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState(null);
     const [loadingStats, setLoadingStats] = useState(false);
-    
+
     const [pagination, setPagination] = useState({
         currentPage: 1,
         totalPages: 1,
@@ -498,15 +498,14 @@ const OrderManagement = () => {
                                                     <select
                                                         value={order.status}
                                                         onChange={(e) => handleQuickStatusUpdate(order._id, e.target.value, order.status)}
-                                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer focus:ring-2 focus:ring-green-500 ${
-                                                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                            order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                                                            order.status === 'processing' ? 'bg-purple-100 text-purple-800' :
-                                                            order.status === 'shipping' ? 'bg-indigo-100 text-indigo-800' :
-                                                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                        }`}
+                                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border-0 cursor-pointer focus:ring-2 focus:ring-green-500 ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                                order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                                                                    order.status === 'processing' ? 'bg-purple-100 text-purple-800' :
+                                                                        order.status === 'shipping' ? 'bg-indigo-100 text-indigo-800' :
+                                                                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                                    'bg-gray-100 text-gray-800'
+                                                            }`}
                                                     >
                                                         <option value={order.status}>{getStatusLabel(order.status)}</option>
                                                         {getAvailableStatuses(order.status).map(status => (
@@ -518,69 +517,31 @@ const OrderManagement = () => {
                                                     {formatDate(order.createdAt)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    {/* Quick Actions Dropdown - Improvement #4 */}
-                                                    <div className="relative inline-block">
+                                                    <div className="flex items-center justify-end gap-1">
                                                         <button
-                                                            onClick={() => setOpenDropdown(openDropdown === order._id ? null : order._id)}
-                                                            className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                                                            onClick={() => viewOrderDetail(order._id)}
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Xem chi tiết"
                                                         >
-                                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                                                <path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                             </svg>
-                                                            Thao tác
+                                                            Chi tiết
                                                         </button>
-
-                                                        {/* Dropdown Menu */}
-                                                        {openDropdown === order._id && (
-                                                            <>
-                                                                {/* Backdrop to close dropdown */}
-                                                                <div
-                                                                    className="fixed inset-0 z-10"
-                                                                    onClick={() => setOpenDropdown(null)}
-                                                                />
-                                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                                                                    <div className="py-1">
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                viewOrderDetail(order._id);
-                                                                                setOpenDropdown(null);
-                                                                            }}
-                                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                                        >
-                                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                            </svg>
-                                                                            Xem chi tiết
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                copyOrderNumber(order.orderNumber);
-                                                                                setOpenDropdown(null);
-                                                                            }}
-                                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                                        >
-                                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                                            </svg>
-                                                                            Sao chép mã đơn
-                                                                        </button>
-                                                                        {order.shippingAddress?.phone && (
-                                                                            <a
-                                                                                href={`tel:${order.shippingAddress.phone}`}
-                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                                                onClick={() => setOpenDropdown(null)}
-                                                                            >
-                                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                                                </svg>
-                                                                                Gọi khách hàng
-                                                                            </a>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </>
-                                                        )}
+                                                        <button
+                                                            onClick={() => {
+                                                                viewOrderDetail(order._id);
+                                                                setTimeout(() => window.print(), 500);
+                                                            }}
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                                            title="In đơn hàng"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                            </svg>
+                                                            In
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>

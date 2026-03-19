@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../contexts/CartContext';
 import { createOrder } from '../api/orderApi';
+import { validatePromotionCode, getAvailablePromotions } from '../api/promotionApi';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiCheck, FiCreditCard, FiTruck, FiShield } from 'react-icons/fi';
 
@@ -26,6 +27,28 @@ const Checkout = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [customerNote, setCustomerNote] = useState('');
+
+  // Promotion state
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [availablePromos, setAvailablePromos] = useState([]);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+
+  // Fetch available promotions
+  useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const result = await getAvailablePromotions();
+        if (result.success) {
+          setAvailablePromos(result.data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải khuyến mãi:', error);
+      }
+    };
+    fetchPromos();
+  }, []);
 
   // Redirect nếu giỏ hàng trống
   useEffect(() => {
@@ -52,12 +75,67 @@ const Checkout = () => {
   };
 
   const shippingCost = calculateShipping();
-  const totalAmount = cart.subtotal + shippingCost;
+  const promotionDiscount = appliedPromo ? appliedPromo.discountAmount : 0;
+  const totalAmount = cart.subtotal - promotionDiscount + shippingCost;
+
+  // Áp dụng mã giảm giá
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      toast.error('Vui lòng nhập mã giảm giá');
+      return;
+    }
+
+    try {
+      setPromoLoading(true);
+      const result = await validatePromotionCode(promoCode.trim(), cart.subtotal);
+      if (result.success) {
+        setAppliedPromo(result.data);
+        setShowPromoModal(false);
+        toast.success(`🎉 Áp dụng mã "${result.data.promotion.code}" thành công! Giảm ${formatPrice(result.data.discountAmount)}`);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Mã giảm giá không hợp lệ');
+      setAppliedPromo(null);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleSelectPromo = (code) => {
+    setPromoCode(code);
+    setTimeout(() => {
+      // Gọi apply promo ngay sau khi setState
+      handleApplyPromoCode(code);
+    }, 100);
+  };
+
+  const handleApplyPromoCode = async (codeToApply) => {
+    try {
+      setPromoLoading(true);
+      const result = await validatePromotionCode(codeToApply, cart.subtotal);
+      if (result.success) {
+        setAppliedPromo(result.data);
+        setShowPromoModal(false);
+        toast.success(`🎉 Áp dụng mã "${result.data.promotion.code}" thành công! Giảm ${formatPrice(result.data.discountAmount)}`);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Mã giảm giá không hợp lệ');
+      setAppliedPromo(null);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  // Hủy mã giảm giá
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+    toast.info('Đã hủy mã giảm giá');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate
     if (!shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.address) {
       toast.error('Vui lòng điền đầy đủ thông tin giao hàng');
       return;
@@ -70,11 +148,18 @@ const Checkout = () => {
 
     try {
       setLoading(true);
-      const result = await createOrder({
+      const orderData = {
         shippingAddress,
         paymentMethod,
         customerNote
-      });
+      };
+
+      // Gửi mã khuyến mãi nếu đã áp dụng
+      if (appliedPromo) {
+        orderData.promotionCode = appliedPromo.promotion.code;
+      }
+
+      const result = await createOrder(orderData);
 
       if (result.success) {
         setOrderSuccess(result.data);
@@ -351,12 +436,92 @@ const Checkout = () => {
 
                 <hr className="my-4" />
 
+                {/* Promotion Code Input */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">🎟️ Mã giảm giá</label>
+                  {appliedPromo ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-mono font-bold text-green-700 text-sm">{appliedPromo.promotion.code}</span>
+                          <p className="text-xs text-green-600 mt-0.5">{appliedPromo.promotion.name}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemovePromo}
+                          className="text-red-500 hover:text-red-700 text-sm font-medium"
+                        >
+                          Hủy
+                        </button>
+                      </div>
+                      <p className="text-sm font-medium text-green-700 mt-1">
+                        Giảm {formatPrice(appliedPromo.discountAmount)}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        placeholder="Nhập mã giảm giá"
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none uppercase"
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyPromo())}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        disabled={promoLoading}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50"
+                      >
+                        {promoLoading ? '...' : 'Áp dụng'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Available promotions list toggle */}
+                  {!appliedPromo && availablePromos.length > 0 && (
+                    <div className="mt-3">
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleSelectPromo(e.target.value);
+                            e.target.value = ''; // Reset select sau khi chọn để có thể chọn lại
+                          }
+                        }}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white"
+                        defaultValue=""
+                      >
+                        <option value="" disabled>-- Hoặc chọn mã giảm giá có sẵn --</option>
+                        {availablePromos.map(promo => {
+                          const isEligible = cart.subtotal >= (promo.minOrderAmount || 0);
+                          return (
+                            <option 
+                              key={promo.code} 
+                              value={promo.code} 
+                              disabled={!isEligible}
+                            >
+                              {promo.code} - Giảm {promo.type === 'percentage' ? `${promo.discountValue}%` : formatPrice(promo.discountValue)} {isEligible ? '' : '(Không đủ điều kiện)'}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
                 {/* Pricing */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tạm tính</span>
                     <span>{formatPrice(cart.subtotal)}</span>
                   </div>
+                  {promotionDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Giảm giá</span>
+                      <span>-{formatPrice(promotionDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Phí vận chuyển</span>
                     <span>

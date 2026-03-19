@@ -5,6 +5,33 @@ const Packaging = require('../models/Packaging');
 const { uploadImage, deleteImage, deleteMultipleImages } = require('../config/cloudinary');
 const { cleanupTempFile, cleanupTempFiles } = require('../middlewares/upload');
 
+// ===== HELPER: Đếm lại productCount chính xác từ DB =====
+
+/**
+ * Đếm lại productCount cho category, certificates, packaging
+ * Thay thế $inc để tránh lỗi âm / mất đồng bộ
+ */
+const recalculateCategoryCount = async (categoryId) => {
+    if (!categoryId) return;
+    const count = await Product.countDocuments({ category: categoryId, isActive: { $exists: true } });
+    await Category.findByIdAndUpdate(categoryId, { productCount: Math.max(0, count) });
+};
+
+const recalculateCertificateCounts = async (certificateIds = []) => {
+    if (!certificateIds || certificateIds.length === 0) return;
+    const ids = Array.isArray(certificateIds) ? certificateIds : [certificateIds];
+    for (const certId of ids) {
+        const count = await Product.countDocuments({ certificates: certId });
+        await Certificate.findByIdAndUpdate(certId, { productCount: Math.max(0, count) });
+    }
+};
+
+const recalculatePackagingCount = async (packagingId) => {
+    if (!packagingId) return;
+    const count = await Product.countDocuments({ packaging: packagingId });
+    await Packaging.findByIdAndUpdate(packagingId, { productCount: Math.max(0, count) });
+};
+
 /**
  * @route   GET /api/products
  * @desc    Lấy danh sách sản phẩm (có filter, phân trang)
@@ -262,25 +289,10 @@ exports.createProduct = async (req, res) => {
         // Tạo product
         const product = await Product.create(productData);
 
-        // Cập nhật productCount trong category
-        await Category.findByIdAndUpdate(category, {
-            $inc: { productCount: 1 }
-        });
-
-        // Cập nhật productCount trong certificates
-        if (productData.certificates && productData.certificates.length > 0) {
-            await Certificate.updateMany(
-                { _id: { $in: productData.certificates } },
-                { $inc: { productCount: 1 } }
-            );
-        }
-
-        // Cập nhật productCount trong packaging
-        if (productData.packaging) {
-            await Packaging.findByIdAndUpdate(productData.packaging, {
-                $inc: { productCount: 1 }
-            });
-        }
+        // Recalculate productCount chính xác
+        await recalculateCategoryCount(category);
+        await recalculateCertificateCounts(productData.certificates);
+        await recalculatePackagingCount(productData.packaging);
 
         // Populate trước khi trả về
         await product.populate([
@@ -355,13 +367,9 @@ exports.updateProduct = async (req, res) => {
                 });
             }
 
-            // Cập nhật productCount
-            await Category.findByIdAndUpdate(product.category, {
-                $inc: { productCount: -1 }
-            });
-            await Category.findByIdAndUpdate(category, {
-                $inc: { productCount: 1 }
-            });
+            // Recalculate productCount cho cả category cũ và mới
+            const oldCategoryId = product.category;
+            // (sẽ recalculate sau khi save)
 
             product.category = category;
         }
@@ -376,21 +384,9 @@ exports.updateProduct = async (req, res) => {
             // Tìm certificates mới thêm
             const addedCerts = newCerts.filter(cert => !oldCerts.includes(cert));
 
-            // Giảm productCount cho certificates bị xóa
-            if (removedCerts.length > 0) {
-                await Certificate.updateMany(
-                    { _id: { $in: removedCerts } },
-                    { $inc: { productCount: -1 } }
-                );
-            }
-
-            // Tăng productCount cho certificates mới
-            if (addedCerts.length > 0) {
-                await Certificate.updateMany(
-                    { _id: { $in: addedCerts } },
-                    { $inc: { productCount: 1 } }
-                );
-            }
+            // Recalculate productCount cho tất cả certificates liên quan
+            const allAffectedCerts = [...new Set([...removedCerts, ...addedCerts])];
+            // (sẽ recalculate sau khi save)
 
             product.certificates = newCerts;
         }
@@ -401,19 +397,8 @@ exports.updateProduct = async (req, res) => {
             const newPackaging = packaging || null;
 
             if (oldPackaging !== newPackaging) {
-                // Giảm productCount cho packaging cũ
-                if (oldPackaging) {
-                    await Packaging.findByIdAndUpdate(oldPackaging, {
-                        $inc: { productCount: -1 }
-                    });
-                }
-
-                // Tăng productCount cho packaging mới
-                if (newPackaging) {
-                    await Packaging.findByIdAndUpdate(newPackaging, {
-                        $inc: { productCount: 1 }
-                    });
-                }
+                // (sẽ recalculate sau khi save)
+                const affectedPackagingIds = [oldPackaging, newPackaging].filter(Boolean);
 
                 product.packaging = newPackaging;
             }
@@ -463,6 +448,22 @@ exports.updateProduct = async (req, res) => {
         }
 
         await product.save();
+
+        // Recalculate productCount cho tất cả entities liên quan
+        await recalculateCategoryCount(product.category);
+        if (category && req.body.category) {
+            // Nếu đổi category, recalculate cả category cũ
+            const oldCat = req.body._oldCategoryId;
+            if (oldCat && oldCat !== product.category.toString()) {
+                await recalculateCategoryCount(oldCat);
+            }
+        }
+        // Recalculate certificates
+        const allCertIds = product.certificates.map(c => c.toString());
+        await recalculateCertificateCounts(allCertIds);
+        // Recalculate packaging
+        await recalculatePackagingCount(product.packaging);
+
         await product.populate([
             { path: 'category', select: 'name slug' },
             { path: 'certificates', select: 'name organization ecoPoints image' },
@@ -510,28 +511,18 @@ exports.deleteProduct = async (req, res) => {
             }
         }
 
-        // Giảm productCount trong category
-        await Category.findByIdAndUpdate(product.category, {
-            $inc: { productCount: -1 }
-        });
-
-        // Giảm productCount trong certificates
-        if (product.certificates && product.certificates.length > 0) {
-            await Certificate.updateMany(
-                { _id: { $in: product.certificates } },
-                { $inc: { productCount: -1 } }
-            );
-        }
-
-        // Giảm productCount trong packaging
-        if (product.packaging) {
-            await Packaging.findByIdAndUpdate(product.packaging, {
-                $inc: { productCount: -1 }
-            });
-        }
+        // Lưu lại IDs để recalculate sau khi xóa
+        const categoryId = product.category;
+        const certificateIds = product.certificates ? [...product.certificates] : [];
+        const packagingId = product.packaging;
 
         // Xóa product
         await Product.findByIdAndDelete(req.params.id);
+
+        // Recalculate productCount chính xác sau khi xóa
+        await recalculateCategoryCount(categoryId);
+        await recalculateCertificateCounts(certificateIds);
+        await recalculatePackagingCount(packagingId);
 
         res.status(200).json({
             success: true,
@@ -777,11 +768,8 @@ exports.addCertificatesToProduct = async (req, res) => {
         product.certificates.push(...newCertIds);
         await product.save();
 
-        // Tăng productCount
-        await Certificate.updateMany(
-            { _id: { $in: newCertIds } },
-            { $inc: { productCount: 1 } }
-        );
+        // Recalculate productCount
+        await recalculateCertificateCounts(newCertIds);
 
         await product.populate('certificates', 'name organization ecoPoints image');
 
@@ -828,10 +816,8 @@ exports.removeCertificateFromProduct = async (req, res) => {
         product.certificates.splice(certIndex, 1);
         await product.save();
 
-        // Giảm productCount
-        await Certificate.findByIdAndUpdate(certificateId, {
-            $inc: { productCount: -1 }
-        });
+        // Recalculate productCount
+        await recalculateCertificateCounts([certificateId]);
 
         await product.populate('certificates', 'name organization ecoPoints image');
 
@@ -889,22 +875,12 @@ exports.setProductPackaging = async (req, res) => {
             });
         }
 
-        // Giảm productCount cho packaging cũ
-        if (oldPackagingId) {
-            await Packaging.findByIdAndUpdate(oldPackagingId, {
-                $inc: { productCount: -1 }
-            });
-        }
-
-        // Tăng productCount cho packaging mới
-        if (newPackagingId) {
-            await Packaging.findByIdAndUpdate(newPackagingId, {
-                $inc: { productCount: 1 }
-            });
-        }
-
         product.packaging = newPackagingId;
         await product.save();
+
+        // Recalculate productCount cho cả packaging cũ và mới
+        await recalculatePackagingCount(oldPackagingId);
+        await recalculatePackagingCount(newPackagingId);
 
         await product.populate('packaging', 'name material ecoPoints');
 
@@ -946,13 +922,14 @@ exports.removeProductPackaging = async (req, res) => {
             });
         }
 
-        // Giảm productCount
-        await Packaging.findByIdAndUpdate(product.packaging, {
-            $inc: { productCount: -1 }
-        });
+        // Lưu packaging ID trước khi xóa
+        const packagingToRecalc = product.packaging;
 
         product.packaging = null;
         await product.save();
+
+        // Recalculate productCount
+        await recalculatePackagingCount(packagingToRecalc);
 
         res.status(200).json({
             success: true,

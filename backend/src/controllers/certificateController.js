@@ -45,10 +45,20 @@ exports.getAllCertificates = async (req, res) => {
       Certificate.countDocuments(query)
     ]);
 
+    // Tính productCount thực tế từ Product collection
+    const certificatesWithCount = await Promise.all(
+      certificates.map(async (cert) => {
+        const realCount = await Product.countDocuments({ certificates: cert._id });
+        const certObj = cert.toObject();
+        certObj.productCount = realCount;
+        return certObj;
+      })
+    );
+
     res.status(200).json({
       success: true,
       data: {
-        certificates,
+        certificates: certificatesWithCount,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(total / parseInt(limit)),

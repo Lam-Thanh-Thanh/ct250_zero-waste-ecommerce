@@ -42,10 +42,20 @@ exports.getAllCategories = async (req, res) => {
             Category.countDocuments(query)
         ]);
 
+        // Tính productCount thực tế từ Product collection
+        const categoriesWithCount = await Promise.all(
+            categories.map(async (cat) => {
+                const realCount = await Product.countDocuments({ category: cat._id });
+                const catObj = cat.toObject();
+                catObj.productCount = realCount;
+                return catObj;
+            })
+        );
+
         res.status(200).json({
             success: true,
             data: {
-                categories,
+                categories: categoriesWithCount,
                 pagination: {
                     currentPage: parseInt(page),
                     totalPages: Math.ceil(total / parseInt(limit)),

@@ -79,6 +79,9 @@ const Home = () => {
                   <span className="text-gray-700 hidden sm:inline">
                     Xin chào, <strong>{user?.username}</strong>
                   </span>
+                  <Link to="/promotions" className="text-gray-700 hover:text-green-600 hidden sm:inline">
+                    Khuyến mãi
+                  </Link>
                   <Link to="/orders" className="text-gray-700 hover:text-green-600 hidden sm:inline">
                     Đơn hàng
                   </Link>
