@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
+import Promotions from './pages/Promotions';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -27,6 +28,7 @@ import OrderManagement from './pages/admin/OrderManagement';
 import ReviewManagement from './pages/admin/ReviewManagement';
 import ChatbotConfig from './pages/admin/ChatbotConfig';
 import ChatbotFaqManagement from './pages/admin/ChatbotFaqManagement';
+import PromotionManagement from './pages/admin/PromotionManagement';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -77,6 +79,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <OrderHistory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/promotions"
+                element={
+                  <ProtectedRoute>
+                    <Promotions />
                   </ProtectedRoute>
                 }
               />
@@ -148,6 +158,16 @@ function App() {
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminLayout>
                       <OrderManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/promotions"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <PromotionManagement />
                     </AdminLayout>
                   </ProtectedRoute>
                 }
