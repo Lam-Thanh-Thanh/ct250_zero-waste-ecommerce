@@ -9,7 +9,7 @@ import DynamicBanner from '../components/DynamicBanner';
 
 
 const Home = () => {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout, loading } = useAuth();
   const { addToCart, cartItemCount } = useCart();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -66,15 +66,15 @@ const Home = () => {
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+              <img src="/Zero-Waste Store.png" alt="Logo" className="h-10 w-auto object-contain" />
               <span className="ml-2 text-xl font-bold text-gray-800">Zero-Waste Store</span>
             </Link>
 
             {/* Navigation */}
             <nav className="flex items-center space-x-4">
-              {isAuthenticated ? (
+              {loading ? (
+                <div className="h-10 w-32 bg-gray-100 animate-pulse rounded-md" title="Đang tải..."></div>
+              ) : isAuthenticated ? (
                 <>
                   <span className="text-gray-700 hidden sm:inline">
                     Xin chào, <strong>{user?.username}</strong>
@@ -98,7 +98,7 @@ const Home = () => {
                       </span>
                     )}
                   </Link>
-                  {isAdmin() && (
+                  {isAdmin && isAdmin() && (
                     <Link to="/admin/dashboard" className="text-gray-700 hover:text-green-600">
                       Quản trị
                     </Link>
@@ -135,7 +135,12 @@ const Home = () => {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Cửa hàng sản phẩm thân thiện với môi trường, giúp bạn sống xanh và bảo vệ hành tinh
           </p>
-          {!isAuthenticated && (
+          {loading ? (
+            <div className="flex justify-center space-x-4">
+              <div className="h-[52px] w-[140px] bg-gray-200 animate-pulse rounded-lg shadow-sm"></div>
+              <div className="h-[52px] w-[140px] bg-gray-200 animate-pulse rounded-lg shadow-sm"></div>
+            </div>
+          ) : !isAuthenticated && (
             <div className="flex justify-center space-x-4">
               <Link to="/register" className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition duration-200">
                 Bắt đầu ngay

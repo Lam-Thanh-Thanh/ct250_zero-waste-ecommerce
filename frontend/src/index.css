@@ -22,14 +22,24 @@ body {
 
 /* Custom animations */
 @keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 .animate-fadeIn {
@@ -45,6 +55,8 @@ input, button {
 input:focus {
   outline: none;
 }
+
+/* Custom Scrollbar for Chatbot Panel */
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -62,4 +74,22 @@ input:focus {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+  .animate-fade-in {
+    animation: fadeIn 1s ease-out forwards;
+  }
+  .animate-slide-in-right {
+    animation: slideInRight 0.5s ease-out forwards;
+  }
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
 }
