@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { getChatbotConfig, updateChatbotConfig } from '../../api/chatbotApi';
+import { getChatbotConfig, updateChatbotConfig, resetChatbotConfig } from '../../api/chatbotApi';
 import { Link } from 'react-router-dom';
 
 const ChatbotConfig = () => {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [showTips, setShowTips] = useState(false);
 
   useEffect(() => {
@@ -54,6 +55,20 @@ const ChatbotConfig = () => {
       toast.error(error.message || 'Không thể cập nhật cấu hình chatbot');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirm('Bạn có chắc muốn đặt lại prompt về mặc định? Prompt hiện tại sẽ bị ghi đè.')) return;
+    setResetting(true);
+    try {
+      const data = await resetChatbotConfig();
+      setConfig(data.data);
+      toast.success('Đã đặt lại prompt về mặc định');
+    } catch (error) {
+      toast.error(error.message || 'Không thể đặt lại prompt');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -190,6 +205,25 @@ const ChatbotConfig = () => {
                     {config.enabled ? 'Bật' : 'Tắt'}
                   </span>
                 </div>
+
+                {/* Nút đặt lại prompt */}
+                <div className="w-px h-8 bg-gray-200 hidden md:block" />
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  disabled={resetting}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Đặt lại cả 2 prompt về giá trị mặc định ban đầu"
+                >
+                  {resetting ? (
+                    <span className="inline-block w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
+                  Đặt lại mặc định
+                </button>
 
                 {/* Tạm ẩn: Ngôn ngữ & Số tin nhắn lịch sử (chưa cần dùng)
                 <div className="w-px h-8 bg-gray-200 hidden md:block" />

@@ -49,10 +49,20 @@ exports.getAllPackagings = async (req, res) => {
             Packaging.countDocuments(query)
         ]);
 
+        // Tính productCount thực tế từ Product collection
+        const packagingsWithCount = await Promise.all(
+            packagings.map(async (pkg) => {
+                const realCount = await Product.countDocuments({ packaging: pkg._id });
+                const pkgObj = pkg.toObject();
+                pkgObj.productCount = realCount;
+                return pkgObj;
+            })
+        );
+
         res.status(200).json({
             success: true,
             data: {
-                packagings,
+                packagings: packagingsWithCount,
                 pagination: {
                     currentPage: parseInt(page),
                     totalPages: Math.ceil(total / parseInt(limit)),

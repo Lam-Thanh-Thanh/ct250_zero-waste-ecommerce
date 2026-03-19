@@ -61,6 +61,18 @@ export const updateChatbotConfig = async (payload) => {
 };
 
 /**
+ * ADMIN: Đặt lại prompt về mặc định
+ */
+export const resetChatbotConfig = async () => {
+  try {
+    const data = await axios.post('/chatbot/admin/config/reset');
+    return data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi khi đặt lại cấu hình chatbot' };
+  }
+};
+
+/**
  * ADMIN: Lấy danh sách FAQ
  */
 export const getChatbotFaqs = async (params = {}) => {

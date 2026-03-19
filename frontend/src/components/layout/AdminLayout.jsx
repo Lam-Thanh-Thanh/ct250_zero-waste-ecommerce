@@ -232,29 +232,28 @@ const AdminLayout = ({ children }) => {
                     </Link>
                 </div>
 
-                {/* User Info & Logout */}
+                {/* User Info & Logout — Single Row */}
                 <div className="border-t bg-white p-4 transition-all duration-300">
-                    <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'mb-3'}`}>
+                    <div className={`flex items-center ${isCollapsed ? 'flex-col gap-2' : 'gap-3'}`}>
                         <div className="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <span className="text-primary-600 font-semibold text-sm">
                                 {user?.name?.charAt(0).toUpperCase() || 'A'}
                             </span>
                         </div>
-                        <div className={`min-w-0 overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
+                        <div className={`flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 max-h-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
                             <p className="text-sm font-medium text-gray-900 truncate whitespace-nowrap">{user?.name || 'Admin'}</p>
                             <p className="text-xs text-gray-500 truncate whitespace-nowrap">{user?.email}</p>
                         </div>
+                        <button
+                            onClick={handleLogout}
+                            className={`flex items-center justify-center text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-300 flex-shrink-0 ${isCollapsed ? 'w-9 h-9 p-0' : 'w-8 h-8 p-0'}`}
+                            title="Đăng xuất"
+                        >
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className={`flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300 ${isCollapsed ? 'w-9 h-9 mx-auto p-0 mt-2' : 'w-full gap-2 px-4 py-2 text-sm'}`}
-                        title="Đăng xuất"
-                    >
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[80px] opacity-100'}`}>Đăng xuất</span>
-                    </button>
                 </div>
             </aside>
 

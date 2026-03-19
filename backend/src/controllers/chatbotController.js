@@ -1,6 +1,6 @@
 const ChatbotConfig = require('../models/chatbotConfigModel');
 const ChatbotFaq = require('../models/chatbotFaqModel');
-const { callGemini } = require('../services/geminiService');
+const { callGeminiWithTools } = require('../services/geminiService');
 
 // Helper: escape ký tự regex đặc biệt trong chuỗi người dùng nhập
 function escapeRegex(str) {
@@ -50,6 +50,33 @@ exports.updateConfig = async (req, res, next) => {
 
     res.json({
       success: true,
+      data: config
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Reset prompt về giá trị mặc định
+exports.resetConfig = async (req, res, next) => {
+  try {
+    const defaultGuest = ChatbotConfig.schema.path('systemPromptGuest').defaultValue;
+    const defaultUser = ChatbotConfig.schema.path('systemPromptUser').defaultValue;
+
+    const config = await ChatbotConfig.findOneAndUpdate(
+      { name: 'default' },
+      {
+        systemPromptGuest: defaultGuest,
+        systemPromptUser: defaultUser,
+        updatedBy: req.user?._id || null,
+        updatedAt: new Date()
+      },
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Đã đặt lại prompt về mặc định',
       data: config
     });
   } catch (error) {
@@ -257,7 +284,7 @@ exports.askChatbot = async (req, res, next) => {
         `Câu hỏi của khách: "${message}".`;
     }
 
-    const answer = await callGemini({
+    const answer = await callGeminiWithTools({
       systemPrompt,
       userMessage: enrichedMessage,
       contextDocs,
