@@ -556,25 +556,78 @@ const ProductForm = () => {
                         {/* Materials */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                             <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Chất liệu</h2>
-                            <div className="flex gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    value={materialInput}
-                                    onChange={(e) => setMaterialInput(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMaterial())}
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Thêm chất liệu..."
-                                />
-                                <button type="button" onClick={addMaterial} className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors">+</button>
+
+                            {/* Predefined Materials Grid */}
+                            <div className="mb-3">
+                                <p className="text-xs text-gray-500 mb-2">Chọn nhanh chất liệu phổ biến:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                        'Tre', 'Gỗ', 'Cotton hữu cơ', 'Inox 304',
+                                        'Giấy tái chế', 'Sợi dừa', 'Silicone thực phẩm', 'Thủy tinh',
+                                        'Vải canvas', 'Lúa mì', 'Sáp ong', 'Bã mía',
+                                        'Lá chuối', 'Tinh bột ngô', 'Cọ tự nhiên', 'Cao su tự nhiên',
+                                    ].map((mat) => {
+                                        const isSelected = formData.materials.includes(mat);
+                                        return (
+                                            <button
+                                                key={mat}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        materials: isSelected
+                                                            ? prev.materials.filter(m => m !== mat)
+                                                            : [...prev.materials, mat]
+                                                    }));
+                                                }}
+                                                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                                                    isSelected
+                                                        ? 'bg-primary-50 text-primary-700 border-primary-300 shadow-sm'
+                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                <span>{mat}</span>
+                                                {isSelected && (
+                                                    <svg className="w-3 h-3 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                                {formData.materials.map((material, index) => (
-                                    <span key={index} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                                        {material}
-                                        <button type="button" onClick={() => removeMaterial(index)} className="text-blue-400 hover:text-blue-600 ml-0.5">×</button>
-                                    </span>
-                                ))}
+
+                            {/* Custom Material Input */}
+                            <div className="border-t border-gray-100 pt-3">
+                                <p className="text-xs text-gray-500 mb-2">Hoặc thêm chất liệu khác:</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={materialInput}
+                                        onChange={(e) => setMaterialInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMaterial())}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                                        placeholder="Nhập chất liệu tùy chỉnh..."
+                                    />
+                                    <button type="button" onClick={addMaterial} className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors">+</button>
+                                </div>
                             </div>
+
+                            {/* Selected Materials Display */}
+                            {formData.materials.length > 0 && (
+                                <div className="mt-3 border-t border-gray-100 pt-3">
+                                    <p className="text-xs text-gray-500 mb-1.5">Đã chọn ({formData.materials.length}):</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {formData.materials.map((material, index) => (
+                                            <span key={index} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-medium border border-primary-200">
+                                                {material}
+                                                <button type="button" onClick={() => removeMaterial(index)} className="text-primary-400 hover:text-primary-600 ml-0.5">×</button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

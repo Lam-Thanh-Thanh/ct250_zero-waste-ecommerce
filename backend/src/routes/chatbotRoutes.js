@@ -9,6 +9,7 @@ const { protect, admin, optionalAuth } = require('../middlewares/auth');
 // Tất cả route dưới /admin yêu cầu admin đăng nhập
 router.get('/admin/config', protect, admin, chatbotController.getConfig);
 router.put('/admin/config', protect, admin, chatbotController.updateConfig);
+router.post('/admin/config/reset', protect, admin, chatbotController.resetConfig);
 
 router.get('/admin/faqs', protect, admin, chatbotController.getFaqs);
 router.post('/admin/faqs', protect, admin, chatbotController.createFaq);
