@@ -92,6 +92,33 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
+   * Đăng nhập bằng Google OAuth2
+   * Nhận credential token từ Google → gửi lên backend → nhận JWT
+   */
+  const loginWithGoogle = async (credential) => {
+    try {
+      const response = await authApi.googleLogin(credential);
+      const { user, token } = response.data;
+
+      // Lưu token vào localStorage (giống flow đăng nhập thường)
+      localStorage.setItem('token', token);
+
+      // Cập nhật state
+      setToken(token);
+      setUser(user);
+      setIsAuthenticated(true);
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Google Login Error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Đăng nhập bằng Google thất bại'
+      };
+    }
+  };
+
+  /**
    * Đăng xuất
    */
   const logout = async () => {
@@ -156,6 +183,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     register,
     login,
+    loginWithGoogle,
     logout,
     updateUser,
     changePassword

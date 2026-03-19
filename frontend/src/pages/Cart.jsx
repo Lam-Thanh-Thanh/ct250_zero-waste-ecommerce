@@ -285,7 +285,7 @@ const Cart = () => {
       <footer className="bg-gray-800 text-white mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <p>&copy; 2024 Zero-Waste Store. All rights reserved.</p>
+            <p>&copy; 2026 Zero-Waste Store. All rights reserved.</p>
             <p className="mt-2 text-gray-400 text-sm">
               Sản phẩm đồ án niên luận ngành Kỹ thuật phần mềm
             </p>

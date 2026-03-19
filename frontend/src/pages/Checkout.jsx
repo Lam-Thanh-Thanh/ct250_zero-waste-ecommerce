@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../contexts/CartContext';
 import { createOrder } from '../api/orderApi';
+import { createVNPayPaymentUrl } from '../api/vnpayApi';
 import { validatePromotionCode, getAvailablePromotions } from '../api/promotionApi';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiCheck, FiCreditCard, FiTruck, FiShield } from 'react-icons/fi';
@@ -162,9 +163,34 @@ const Checkout = () => {
       const result = await createOrder(orderData);
 
       if (result.success) {
-        setOrderSuccess(result.data);
-        refreshCart();
-        toast.success('🎉 Đặt hàng thành công!');
+        // ===== Xử lý đặc biệt cho VNPay =====
+        if (paymentMethod === 'VNPay') {
+          try {
+            // Gọi API tạo URL thanh toán VNPay
+            const vnpayResult = await createVNPayPaymentUrl({
+              orderId: result.data.order._id,
+              amount: result.data.order.totalAmount,
+              orderDescription: `Thanh toan don hang ${result.data.order.orderNumber}`
+            });
+
+            if (vnpayResult.success && vnpayResult.data.paymentUrl) {
+              // Redirect người dùng sang cổng thanh toán VNPay
+              toast.info('Đang chuyển hướng đến cổng thanh toán VNPay...');
+              window.location.href = vnpayResult.data.paymentUrl;
+              return; // Không thực hiện các bước bên dưới
+            } else {
+              toast.error('Không thể tạo link thanh toán VNPay');
+            }
+          } catch (vnpayError) {
+            console.error('VNPay Error:', vnpayError);
+            toast.error(vnpayError.message || 'Lỗi khi tạo thanh toán VNPay');
+          }
+        } else {
+          // Các phương thức khác: hiển thị màn hình thành công như cũ
+          setOrderSuccess(result.data);
+          refreshCart();
+          toast.success('🎉 Đặt hàng thành công!');
+        }
       }
     } catch (error) {
       toast.error(error.message || 'Lỗi khi đặt hàng');
@@ -176,10 +202,8 @@ const Checkout = () => {
   // Payment methods config
   const paymentMethods = [
     { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵', description: 'Thanh toán bằng tiền mặt khi nhận hàng' },
-    { value: 'Banking', label: 'Chuyển khoản ngân hàng', icon: '🏦', description: 'Chuyển khoản qua tài khoản ngân hàng' },
-    { value: 'Momo', label: 'Ví MoMo', icon: '📱', description: 'Thanh toán qua ví điện tử MoMo' },
-    { value: 'ZaloPay', label: 'ZaloPay', icon: '💳', description: 'Thanh toán qua ví ZaloPay' },
-    { value: 'VNPay', label: 'VNPay', icon: '🔒', description: 'Thanh toán qua cổng VNPay' }
+    { value: 'Momo', label: 'Ví MoMo', icon: '🟣', description: 'Thanh toán qua ví điện tử MoMo' },
+    { value: 'VNPay', label: 'VNPay', icon: '🏧', description: 'Thanh toán qua cổng VNPay (ATM/Internet Banking)' }
   ];
 
   // ===== Success Screen =====

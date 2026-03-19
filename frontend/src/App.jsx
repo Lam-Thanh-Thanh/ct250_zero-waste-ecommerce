@@ -14,6 +14,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
 import Promotions from './pages/Promotions';
+import VNPayReturn from './pages/VNPayReturn';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -48,6 +49,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
 
               {/* Protected Routes */}
               <Route
