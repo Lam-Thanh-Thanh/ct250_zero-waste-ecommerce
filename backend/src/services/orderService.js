@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const ProductVariant = require('../models/ProductVariant');
 const Payment = require('../models/Payment');
 const User = require('../models/User');
 const Promotion = require('../models/Promotion');
@@ -27,6 +28,9 @@ class OrderService {
             .populate({
                 path: 'items.product',
                 select: 'name price discount finalPrice stock inStock images isActive'
+            })
+            .populate({
+                path: 'items.variant'
             });
 
         if (!cart || cart.items.length === 0) {
@@ -39,6 +43,7 @@ class OrderService {
 
         for (const cartItem of cart.items) {
             const product = cartItem.product;
+            const variant = cartItem.variant;
 
             if (!product) {
                 throw new Error('Một số sản phẩm không còn tồn tại');
@@ -46,15 +51,19 @@ class OrderService {
             if (!product.isActive) {
                 throw new Error(`Sản phẩm "${product.name}" đã ngừng kinh doanh`);
             }
-            if (!product.inStock || product.stock < cartItem.quantity) {
+            
+            const checkStock = variant ? variant.stockQuantity : product.stock;
+            if (checkStock < cartItem.quantity || (!variant && !product.inStock)) {
                 throw new Error(
-                    `Sản phẩm "${product.name}" chỉ còn ${product.stock} trong kho`
+                    `Sản phẩm "${product.name}${variant ? ' - ' + variant.size : ''}" chỉ còn ${checkStock} trong kho`
                 );
             }
 
-            const price = product.price;
+            const basePrice = product.price;
+            const priceModifier = variant ? (variant.priceModifier || 0) : 0;
+            const price = basePrice + priceModifier;
             const discount = product.discount || 0;
-            const finalPrice = product.finalPrice || (price - (price * discount / 100));
+            const finalPrice = price - (price * discount / 100);
             const itemSubtotal = finalPrice * cartItem.quantity;
 
             // Lấy ảnh chính
@@ -66,6 +75,10 @@ class OrderService {
                 product: product._id,
                 productName: product.name,
                 productImage: mainImage,
+                variant: variant ? variant._id : null,
+                variantSize: variant ? variant.size : null,
+                variantWeight: variant ? variant.weight : null,
+                variantVolume: variant ? variant.volume : null,
                 quantity: cartItem.quantity,
                 price: price,
                 discount: discount,
@@ -152,27 +165,44 @@ class OrderService {
 
         // 7. Trừ stock cho từng sản phẩm
         for (const item of orderItems) {
-            const updateResult = await Product.findOneAndUpdate(
-                {
-                    _id: item.product,
-                    stock: { $gte: item.quantity } // Double-check stock
-                },
-                {
-                    $inc: { stock: -item.quantity }
-                },
-                { new: true }
-            );
+            if (item.variant) {
+                const updateVariant = await ProductVariant.findOneAndUpdate(
+                    {
+                        _id: item.variant,
+                        stockQuantity: { $gte: item.quantity }
+                    },
+                    {
+                        $inc: { stockQuantity: -item.quantity }
+                    },
+                    { new: true }
+                );
+                if (!updateVariant) {
+                    await Order.findByIdAndDelete(savedOrder._id);
+                    throw new Error(`Biến thể "${item.productName}" hết hàng trong quá trình xử lý`);
+                }
+            } else {
+                const updateResult = await Product.findOneAndUpdate(
+                    {
+                        _id: item.product,
+                        stock: { $gte: item.quantity } // Double-check stock
+                    },
+                    {
+                        $inc: { stock: -item.quantity }
+                    },
+                    { new: true }
+                );
 
-            if (!updateResult) {
-                // Rollback: xóa order vừa tạo nếu trừ stock thất bại
-                await Order.findByIdAndDelete(savedOrder._id);
-                throw new Error(`Sản phẩm "${item.productName}" hết hàng trong quá trình xử lý`);
-            }
+                if (!updateResult) {
+                    // Rollback: xóa order vừa tạo nếu trừ stock thất bại
+                    await Order.findByIdAndDelete(savedOrder._id);
+                    throw new Error(`Sản phẩm "${item.productName}" hết hàng trong quá trình xử lý`);
+                }
 
-            // Cập nhật inStock nếu hết hàng
-            if (updateResult.stock === 0) {
-                updateResult.inStock = false;
-                await updateResult.save();
+                // Cập nhật inStock nếu hết hàng
+                if (updateResult.stock === 0) {
+                    updateResult.inStock = false;
+                    await updateResult.save();
+                }
             }
         }
 
@@ -300,13 +330,19 @@ class OrderService {
 
         // Hoàn lại stock cho từng sản phẩm
         for (const item of order.items) {
-            await Product.findByIdAndUpdate(
-                item.product,
-                {
-                    $inc: { stock: item.quantity },
-                    $set: { inStock: true }
-                }
-            );
+            if (item.variant) {
+                await ProductVariant.findByIdAndUpdate(item.variant, {
+                    $inc: { stockQuantity: item.quantity }
+                });
+            } else {
+                await Product.findByIdAndUpdate(
+                    item.product,
+                    {
+                        $inc: { stock: item.quantity },
+                        $set: { inStock: true }
+                    }
+                );
+            }
         }
 
         // Hoàn lại mã giảm giá nếu có

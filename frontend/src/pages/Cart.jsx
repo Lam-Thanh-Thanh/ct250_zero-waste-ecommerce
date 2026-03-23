@@ -14,18 +14,18 @@ const Cart = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
-  const handleUpdateQuantity = async (productId, newQuantity) => {
+  const handleUpdateQuantity = async (productId, newQuantity, variantId = null) => {
     try {
-      await updateQuantity(productId, newQuantity);
+      await updateQuantity(productId, newQuantity, variantId);
     } catch (error) {
       toast.error(error.message || 'Lỗi khi cập nhật số lượng');
     }
   };
 
-  const handleRemoveItem = async (productId, productName) => {
+  const handleRemoveItem = async (productId, productName, variantId = null) => {
     if (window.confirm(`Bạn có chắc muốn xóa "${productName}" khỏi giỏ hàng?`)) {
       try {
-        await removeItem(productId);
+        await removeItem(productId, variantId);
         toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
       } catch (error) {
         toast.error(error.message || 'Lỗi khi xóa sản phẩm');
@@ -132,6 +132,12 @@ const Cart = () => {
                             alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
+                        ) : item.product.images?.length > 0 ? (
+                          <img
+                            src={item.product.images[0].url}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <FiShoppingBag size={32} />
@@ -144,6 +150,11 @@ const Cart = () => {
                         <h3 className="text-lg font-medium text-gray-900 truncate">
                           {item.product.name}
                         </h3>
+                        {item.variant && (
+                           <p className="text-sm text-gray-500 mt-1">
+                              Phân loại: {item.variant.size && `Size: ${item.variant.size} `}{item.variant.weight && `${item.variant.weight} `}{item.variant.volume && `${item.variant.volume}`}
+                           </p>
+                        )}
 
                         {/* Price */}
                         <div className="mt-1">
@@ -170,7 +181,7 @@ const Cart = () => {
                         <div className="mt-3 flex items-center space-x-4">
                           <div className="flex items-center border border-gray-300 rounded-lg">
                             <button
-                              onClick={() => handleUpdateQuantity(item.product._id, item.quantity - 1)}
+                              onClick={() => handleUpdateQuantity(item.product._id, item.quantity - 1, item.variant?._id)}
                               disabled={item.quantity <= 1 || loading}
                               className="px-3 py-1 text-gray-600 hover:text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-lg transition"
                             >
@@ -180,8 +191,8 @@ const Cart = () => {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => handleUpdateQuantity(item.product._id, item.quantity + 1)}
-                              disabled={item.quantity >= item.product.stock || loading}
+                              onClick={() => handleUpdateQuantity(item.product._id, item.quantity + 1, item.variant?._id)}
+                              disabled={item.quantity >= (item.variant ? item.variant.stockQuantity : item.product.stock) || loading}
                               className="px-3 py-1 text-gray-600 hover:text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-lg transition"
                             >
                               <FiPlus size={14} />
@@ -202,7 +213,7 @@ const Cart = () => {
                           {formatPrice(item.subtotal)}
                         </p>
                         <button
-                          onClick={() => handleRemoveItem(item.product._id, item.product.name)}
+                          onClick={() => handleRemoveItem(item.product._id, item.product.name, item.variant?._id)}
                           className="mt-2 text-red-400 hover:text-red-600 transition"
                           title="Xóa"
                         >

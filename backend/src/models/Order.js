@@ -14,6 +14,14 @@ const orderDetailSchema = new mongoose.Schema({
     },
     productName: String,     // Lưu tên sản phẩm tại thời điểm đặt
     productImage: String,    // Lưu ảnh chính
+    variant: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ProductVariant',
+        default: null
+    },
+    variantSize: String,
+    variantWeight: Number,
+    variantVolume: String,
     quantity: {
         type: Number,
         required: true,

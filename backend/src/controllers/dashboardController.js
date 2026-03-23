@@ -35,6 +35,7 @@ const getStats = async (req, res) => {
                 monthlyRevenue: monthlyStats.monthlyRevenue,
                 newOrders: monthlyStats.newOrders,
                 newUsers: monthlyStats.newUsers,
+                newItems: monthlyStats.newItems,
 
                 // Hàng 2 trái: AreaChart doanh thu theo ngày
                 revenueByDay,

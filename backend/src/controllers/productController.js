@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const ProductVariant = require('../models/ProductVariant');
 const Category = require('../models/Category');
 const Certificate = require('../models/Certificate');
 const Packaging = require('../models/Packaging');
@@ -110,6 +111,7 @@ exports.getAllProducts = async (req, res) => {
                 .populate('category', 'name slug')
                 .populate('certificates', 'name organization ecoPoints image')
                 .populate('packaging', 'name material ecoPoints')
+                .populate('variants')
                 .sort(sortOptions)
                 .skip(skip)
                 .limit(parseInt(limit)),
@@ -147,7 +149,8 @@ exports.getProductById = async (req, res) => {
         const product = await Product.findById(req.params.id)
             .populate('category', 'name slug')
             .populate('certificates', 'name organization description ecoPoints image issuedDate')
-            .populate('packaging', 'name material description ecoPoints isBiodegradable isReusable isRecyclable decompositionTime');
+            .populate('packaging', 'name material description ecoPoints isBiodegradable isReusable isRecyclable decompositionTime')
+            .populate('variants');
 
         if (!product) {
             return res.status(404).json({
@@ -197,7 +200,8 @@ exports.createProduct = async (req, res) => {
             certificates,
             packaging,
             isActive,
-            isFeatured
+            isFeatured,
+            variants
         } = req.body;
 
         // Kiểm tra category tồn tại
@@ -289,6 +293,24 @@ exports.createProduct = async (req, res) => {
         // Tạo product
         const product = await Product.create(productData);
 
+        // Xử lý tạo variants nếu có
+        if (variants) {
+            const parsedVariants = Array.isArray(variants) ? variants : JSON.parse(variants);
+            if (parsedVariants.length > 0) {
+                const variantPromises = parsedVariants.map(v => ProductVariant.create({
+                    product: product._id,
+                    weight: v.weight || 0,
+                    size: v.size || '',
+                    volume: v.volume || '',
+                    stockQuantity: v.stockQuantity || 0,
+                    priceModifier: v.priceModifier || 0
+                }));
+                const createdVariants = await Promise.all(variantPromises);
+                product.variants = createdVariants.map(v => v._id);
+                await product.save();
+            }
+        }
+
         // Recalculate productCount chính xác
         await recalculateCategoryCount(category);
         await recalculateCertificateCounts(productData.certificates);
@@ -298,7 +320,8 @@ exports.createProduct = async (req, res) => {
         await product.populate([
             { path: 'category', select: 'name slug' },
             { path: 'certificates', select: 'name organization ecoPoints image' },
-            { path: 'packaging', select: 'name material ecoPoints' }
+            { path: 'packaging', select: 'name material ecoPoints' },
+            { path: 'variants' }
         ]);
 
         res.status(201).json({
@@ -343,7 +366,8 @@ exports.updateProduct = async (req, res) => {
             certificates,
             packaging,
             isActive,
-            isFeatured
+            isFeatured,
+            variants
         } = req.body;
 
         const product = await Product.findById(req.params.id);
@@ -422,6 +446,36 @@ exports.updateProduct = async (req, res) => {
         if (isActive !== undefined) product.isActive = isActive;
         if (isFeatured !== undefined) product.isFeatured = isFeatured;
 
+        // Cập nhật variants nếu có
+        if (variants !== undefined) {
+            const parsedVariants = Array.isArray(variants) ? variants : JSON.parse(variants);
+            const newVariantIds = [];
+            
+            for (const v of parsedVariants) {
+                if (v._id) {
+                    await ProductVariant.findByIdAndUpdate(v._id, {
+                        weight: v.weight || 0,
+                        size: v.size || '',
+                        volume: v.volume || '',
+                        stockQuantity: v.stockQuantity || 0,
+                        priceModifier: v.priceModifier || 0
+                    });
+                    newVariantIds.push(v._id);
+                } else {
+                    const newVar = await ProductVariant.create({
+                        product: product._id,
+                        weight: v.weight || 0,
+                        size: v.size || '',
+                        volume: v.volume || '',
+                        stockQuantity: v.stockQuantity || 0,
+                        priceModifier: v.priceModifier || 0
+                    });
+                    newVariantIds.push(newVar._id.toString());
+                }
+            }
+            product.variants = newVariantIds;
+        }
+
         // Upload ảnh mới nếu có
         if (req.files && req.files.length > 0) {
             try {
@@ -467,7 +521,8 @@ exports.updateProduct = async (req, res) => {
         await product.populate([
             { path: 'category', select: 'name slug' },
             { path: 'certificates', select: 'name organization ecoPoints image' },
-            { path: 'packaging', select: 'name material ecoPoints' }
+            { path: 'packaging', select: 'name material ecoPoints' },
+            { path: 'variants' }
         ]);
 
         res.status(200).json({
@@ -515,6 +570,9 @@ exports.deleteProduct = async (req, res) => {
         const categoryId = product.category;
         const certificateIds = product.certificates ? [...product.certificates] : [];
         const packagingId = product.packaging;
+
+        // Xóa các variants thuộc về product này
+        await ProductVariant.deleteMany({ product: req.params.id });
 
         // Xóa product
         await Product.findByIdAndDelete(req.params.id);

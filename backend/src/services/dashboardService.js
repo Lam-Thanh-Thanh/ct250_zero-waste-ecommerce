@@ -17,15 +17,18 @@ const getRevenueByDay = async (days = 30) => {
 
     // Aggregation Pipeline:
     // 1. $match: Lọc đơn hàng trong khoảng thời gian
-    // 2. $group: Nhóm theo ngày, tính tổng doanh thu (chỉ đơn paid) & đếm tổng đơn
+    // 1.b. $addFields: Tính tổng số lượng sản phẩm của mỗi đơn
+    // 2. $group: Nhóm theo ngày, tính tổng doanh thu (chỉ đơn paid), đếm tổng đơn & tổng SP
     // 3. $sort: Sắp xếp theo ngày tăng dần
     const revenue = await Order.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
+        { $addFields: { orderTotalItems: { $sum: "$items.quantity" } } },
         {
             $group: {
                 _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
                 totalRevenue: { $sum: { $cond: [{ $eq: ['$paymentStatus', 'paid'] }, '$totalAmount', 0] } },
-                orderCount: { $sum: 1 }
+                orderCount: { $sum: 1 },
+                totalItemsCount: { $sum: "$orderTotalItems" }
             }
         },
         { $sort: { _id: 1 } },
@@ -34,7 +37,8 @@ const getRevenueByDay = async (days = 30) => {
                 _id: 0,
                 date: '$_id',
                 revenue: '$totalRevenue',
-                orders: '$orderCount'
+                orders: '$orderCount',
+                items: '$totalItemsCount'
             }
         }
     ]);
@@ -53,11 +57,13 @@ const getRevenueByMonth = async (months = 12) => {
     // Group theo year-month thay vì year-month-day
     const revenue = await Order.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
+        { $addFields: { orderTotalItems: { $sum: "$items.quantity" } } },
         {
             $group: {
                 _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
                 totalRevenue: { $sum: { $cond: [{ $eq: ['$paymentStatus', 'paid'] }, '$totalAmount', 0] } },
-                orderCount: { $sum: 1 }
+                orderCount: { $sum: 1 },
+                totalItemsCount: { $sum: "$orderTotalItems" }
             }
         },
         { $sort: { _id: 1 } },
@@ -66,7 +72,8 @@ const getRevenueByMonth = async (months = 12) => {
                 _id: 0,
                 date: '$_id',
                 revenue: '$totalRevenue',
-                orders: '$orderCount'
+                orders: '$orderCount',
+                items: '$totalItemsCount'
             }
         }
     ]);
@@ -89,6 +96,14 @@ const getMonthlyStats = async () => {
         createdAt: { $gte: startOfMonth }
     });
 
+    // Tổng số sản phẩm (items) được bán ra trong tháng (chỉ đơn hàng hợp lệ, nhưng ở đây có thể lấy tất cả giống đơn hàng mới)
+    const itemsAgg = await Order.aggregate([
+        { $match: { createdAt: { $gte: startOfMonth } } },
+        { $addFields: { orderTotalItems: { $sum: "$items.quantity" } } },
+        { $group: { _id: null, totalItems: { $sum: "$orderTotalItems" } } }
+    ]);
+    const newItems = itemsAgg.length > 0 ? itemsAgg[0].totalItems : 0;
+
     // Tổng doanh thu tháng hiện tại (chỉ đơn đã thanh toán)
     const revenueAgg = await Order.aggregate([
         {
@@ -107,7 +122,7 @@ const getMonthlyStats = async () => {
 
     const monthlyRevenue = revenueAgg.length > 0 ? revenueAgg[0].totalRevenue : 0;
 
-    return { newOrders, newUsers, monthlyRevenue };
+    return { newOrders, newUsers, monthlyRevenue, newItems };
 };
 
 // ===== 4. TOP 5 SẢN PHẨM BÁN CHẠY NHẤT =====
@@ -571,15 +586,17 @@ const getRevenueByDayInMonth = async (month, year) => {
     const { start, end } = getMonthRange(month, year);
     const revenue = await Order.aggregate([
         { $match: { createdAt: { $gte: start, $lte: end } } },
+        { $addFields: { orderTotalItems: { $sum: "$items.quantity" } } },
         {
             $group: {
                 _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
                 totalRevenue: { $sum: { $cond: [{ $eq: ['$paymentStatus', 'paid'] }, '$totalAmount', 0] } },
-                orderCount: { $sum: 1 }
+                orderCount: { $sum: 1 },
+                totalItemsCount: { $sum: "$orderTotalItems" }
             }
         },
         { $sort: { _id: 1 } },
-        { $project: { _id: 0, date: '$_id', revenue: '$totalRevenue', orders: '$orderCount' } }
+        { $project: { _id: 0, date: '$_id', revenue: '$totalRevenue', orders: '$orderCount', items: '$totalItemsCount' } }
     ]);
     return revenue;
 };

@@ -38,7 +38,8 @@ const ProductForm = () => {
         packaging: '',
         materials: [],
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        variants: []
     });
     const [imageFiles, setImageFiles] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
@@ -104,7 +105,8 @@ const ProductForm = () => {
                     packaging: product.packaging?._id || '',
                     materials: product.materials || [],
                     isActive: product.isActive,
-                    isFeatured: product.isFeatured
+                    isFeatured: product.isFeatured,
+                    variants: product.variants || []
                 });
                 setExistingImages(product.images || []);
             } else {
@@ -209,6 +211,39 @@ const ProductForm = () => {
         }));
     };
 
+    // --- Variant logic ---
+    const handleAddVariant = () => {
+        setFormData(prev => ({
+            ...prev,
+            variants: [...prev.variants, { size: '', weight: '', volume: '', stockQuantity: '', priceModifier: '' }]
+        }));
+    };
+
+    const handleVariantChange = (index, field, value) => {
+        setFormData(prev => {
+            const newVariants = [...prev.variants];
+            newVariants[index][field] = value;
+            return { ...prev, variants: newVariants };
+        });
+    };
+
+    const handleRemoveVariant = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            variants: prev.variants.filter((_, i) => i !== index)
+        }));
+    };
+
+    // Auto-calculate total stock from variants
+    useEffect(() => {
+        if (formData.variants && formData.variants.length > 0) {
+            const totalStock = formData.variants.reduce((sum, v) => sum + (Number(v.stockQuantity) || 0), 0);
+            if (formData.stock !== totalStock.toString()) {
+                setFormData(prev => ({ ...prev, stock: totalStock.toString() }));
+            }
+        }
+    }, [formData.variants]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -231,6 +266,7 @@ const ProductForm = () => {
             data.append('materials', JSON.stringify(formData.materials));
             data.append('isActive', formData.isActive);
             data.append('isFeatured', formData.isFeatured);
+            data.append('variants', JSON.stringify(formData.variants));
 
             imageFiles.forEach(file => {
                 data.append('images', file);
@@ -355,6 +391,56 @@ const ProductForm = () => {
                                     />
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Variants */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Phân loại sản phẩm (Tùy chọn)</h2>
+                                <button type="button" onClick={handleAddVariant} className="text-sm px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg font-medium hover:bg-primary-100 transition-colors">
+                                    + Thêm phân loại
+                                </button>
+                            </div>
+                            
+                            {formData.variants.length > 0 ? (
+                                <div className="space-y-4">
+                                    {formData.variants.map((v, index) => (
+                                        <div key={index} className="p-4 border rounded-lg bg-gray-50 flex flex-col gap-3 relative">
+                                            <button type="button" onClick={() => handleRemoveVariant(index)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="Xóa phân loại">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                            
+                                            <div className="grid grid-cols-3 gap-3">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Kích thước (VD: S, M, L)</label>
+                                                    <input type="text" value={v.size || ''} onChange={(e) => handleVariantChange(index, 'size', e.target.value)} placeholder="Nhập kích thước..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Trọng lượng (VD: 500g)</label>
+                                                    <input type="text" value={v.weight || ''} onChange={(e) => handleVariantChange(index, 'weight', e.target.value)} placeholder="Nhập trọng lượng..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Thể tích (VD: 1L, 500ml)</label>
+                                                    <input type="text" value={v.volume || ''} onChange={(e) => handleVariantChange(index, 'volume', e.target.value)} placeholder="Nhập thể tích..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Tồn kho <span className="text-red-500">*</span></label>
+                                                    <input type="number" required min="0" value={v.stockQuantity} onChange={(e) => handleVariantChange(index, 'stockQuantity', e.target.value)} placeholder="Số lượng trong kho..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Giá cộng thêm (đ) (Có thể âm)</label>
+                                                    <input type="number" value={v.priceModifier} onChange={(e) => handleVariantChange(index, 'priceModifier', e.target.value)} placeholder="Nhập số tiền..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
+                                                    <p className="text-[10px] text-gray-500 mt-1">So với giá mặc định</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500 italic mt-2">Sản phẩm này hiện chưa có phân loại nào.</p>
+                            )}
                         </div>
 
                         {/* Images */}
@@ -506,8 +592,11 @@ const ProductForm = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Số lượng tồn kho <span className="text-red-500">*</span></label>
-                                    <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required min="0" placeholder="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500" />
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-xs font-medium text-gray-600">Số lượng tồn kho <span className="text-red-500">*</span></label>
+                                        {formData.variants?.length > 0 && <span className="text-[10px] text-gray-500 italic">(Tự động tính từ phân loại)</span>}
+                                    </div>
+                                    <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required min="0" placeholder="0" className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 ${formData.variants?.length > 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`} disabled={formData.variants?.length > 0} />
                                 </div>
                             </div>
                         </div>

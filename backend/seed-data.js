@@ -11,6 +11,7 @@ const seedAll = async () => {
     const Packaging = require('./src/models/Packaging');
     const Certificate = require('./src/models/Certificate');
     const Product = require('./src/models/Product');
+    const ProductVariant = require('./src/models/ProductVariant');
 
     // ========== 1. CATEGORIES (10) ==========
     console.log('\n📁 Seeding Categories...');
@@ -232,6 +233,31 @@ const seedAll = async () => {
     }
     console.log(`   ✅ Created ${products.length} products`);
 
+    // ========== 5.1. PRODUCT VARIANTS ==========
+    console.log('\n🔀 Seeding Product Variants...');
+    await ProductVariant.deleteMany({});
+    
+    // Bình nước tre (products[0])
+    const p0_v1 = await ProductVariant.create({ product: products[0]._id, volume: '500ml', stockQuantity: 30, priceModifier: 0 });
+    const p0_v2 = await ProductVariant.create({ product: products[0]._id, volume: '750ml', stockQuantity: 20, priceModifier: 50000 });
+    products[0].variants = [p0_v1._id, p0_v2._id];
+    await products[0].save();
+
+    // Túi vải canvas (products[1])
+    const p1_v1 = await ProductVariant.create({ product: products[1]._id, size: 'A4', stockQuantity: 100, priceModifier: 0 });
+    const p1_v2 = await ProductVariant.create({ product: products[1]._id, size: 'A3', stockQuantity: 20, priceModifier: 20000 });
+    products[1].variants = [p1_v1._id, p1_v2._id];
+    await products[1].save();
+
+    // Nước rửa chén hữu cơ (products[7])
+    const p7_v1 = await ProductVariant.create({ product: products[7]._id, volume: '500ml', stockQuantity: 40, priceModifier: -30000 });
+    const p7_v2 = await ProductVariant.create({ product: products[7]._id, volume: '1L', stockQuantity: 20, priceModifier: 0 });
+    products[7].variants = [p7_v1._id, p7_v2._id];
+    await products[7].save();
+
+    const variants = [p0_v1, p0_v2, p1_v1, p1_v2, p7_v1, p7_v2];
+    console.log(`   ✅ Created ${variants.length} product variants`);
+
     // ========== 6. ORDERS (10) ==========
     console.log('\n🛒 Seeding Orders...');
     const Order = require('./src/models/Order');
@@ -270,18 +296,40 @@ const seedAll = async () => {
         for (let j = 0; j < itemsCount; j++) {
             const p = shuffledProducts[j];
             const quantity = Math.floor(nextRandom() * 3) + 1;
-            const finalPrice = p.price * (1 - p.discount / 100);
+            
+            // Check for variants
+            let assignedVariant = null;
+            let displayPrice = p.price;
+            
+            if (p.variants && p.variants.length > 0) {
+                const productVariants = variants.filter(v => v.product.toString() === p._id.toString());
+                if (productVariants.length > 0) {
+                    assignedVariant = productVariants[Math.floor(nextRandom() * productVariants.length)];
+                    displayPrice += assignedVariant.priceModifier;
+                }
+            }
+
+            const finalPrice = displayPrice * (1 - p.discount / 100);
             const itemSubtotal = finalPrice * quantity;
 
-            items.push({
+            const baseItem = {
                 product: p._id,
                 productName: p.name,
                 quantity: quantity,
-                price: p.price,
+                price: displayPrice,
                 discount: p.discount,
                 finalPrice: finalPrice,
                 subtotal: itemSubtotal
-            });
+            };
+
+            if (assignedVariant) {
+                baseItem.variant = assignedVariant._id;
+                baseItem.variantSize = assignedVariant.size;
+                baseItem.variantWeight = assignedVariant.weight;
+                baseItem.variantVolume = assignedVariant.volume;
+            }
+
+            items.push(baseItem);
             subtotal += itemSubtotal;
         }
 
@@ -522,6 +570,7 @@ const seedAll = async () => {
     console.log(`📦 Packagings   : ${packagings.length}`);
     console.log(`🏅 Certificates : ${certificates.length}`);
     console.log(`🛍️ Products     : ${products.length}`);
+    console.log(`🔀 Variants     : ${variants.length}`);
     console.log(`🛒 Orders       : ${orders.length}`);
     console.log(`⭐ Reviews      : ${reviews.length}`);
     console.log(`🖼️ Banners      : ${banners.length}`);

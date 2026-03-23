@@ -33,10 +33,10 @@ export const CartProvider = ({ children }) => {
     }, [fetchCart]);
 
     // Thêm sản phẩm vào giỏ
-    const addToCart = async (productId, quantity = 1) => {
+    const addToCart = async (productId, quantity = 1, variantId = null) => {
         try {
             setLoading(true);
-            const response = await cartApi.addToCart(productId, quantity);
+            const response = await cartApi.addToCart(productId, quantity, variantId);
             if (response.success) {
                 setCart(response.data);
             }
@@ -49,10 +49,10 @@ export const CartProvider = ({ children }) => {
     };
 
     // Cập nhật số lượng
-    const updateQuantity = async (productId, quantity) => {
+    const updateQuantity = async (productId, quantity, variantId = null) => {
         try {
             setLoading(true);
-            const response = await cartApi.updateCartItem(productId, quantity);
+            const response = await cartApi.updateCartItem(productId, quantity, variantId);
             if (response.success) {
                 setCart(response.data);
             }
@@ -65,10 +65,10 @@ export const CartProvider = ({ children }) => {
     };
 
     // Xóa sản phẩm
-    const removeItem = async (productId) => {
+    const removeItem = async (productId, variantId = null) => {
         try {
             setLoading(true);
-            const response = await cartApi.removeCartItem(productId);
+            const response = await cartApi.removeCartItem(productId, variantId);
             if (response.success) {
                 setCart(response.data);
             }
