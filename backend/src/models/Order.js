@@ -196,11 +196,10 @@ orderSchema.pre('save', function () {
 });
 
 // ===== INDEX: Tối ưu query =====
-orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ user: 1 });
 orderSchema.index({ status: 1 });
-orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, createdAt: 1 }); // Compound index for Dashboard
 orderSchema.index({ 'shippingAddress.phone': 1 });
 
 module.exports = mongoose.model('Order', orderSchema);

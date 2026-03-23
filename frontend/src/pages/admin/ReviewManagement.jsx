@@ -19,7 +19,7 @@ const ReviewManagement = () => {
         limit: 20
     });
     const [pagination, setPagination] = useState({});
-    
+
     // Modals
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
@@ -36,7 +36,7 @@ const ReviewManagement = () => {
             };
             if (params.status === 'all') delete params.status;
             if (params.rating === 'all') delete params.rating;
-            
+
             const response = await getReviews(params);
             setReviews(response.data.reviews);
             setPagination(response.data.pagination);
@@ -54,7 +54,7 @@ const ReviewManagement = () => {
     // Handle approve
     const handleApprove = async (id) => {
         if (!confirm('Bạn có chắc muốn duyệt đánh giá này?')) return;
-        
+
         try {
             await approveReview(id);
             toast.success('Duyệt đánh giá thành công');
@@ -93,7 +93,7 @@ const ReviewManagement = () => {
     // Handle delete
     const handleDelete = async (id) => {
         if (!confirm('Bạn có chắc muốn xóa đánh giá này? Hành động này không thể hoàn tác.')) return;
-        
+
         try {
             await deleteReview(id);
             toast.success('Xóa đánh giá thành công');
@@ -228,102 +228,102 @@ const ReviewManagement = () => {
                 ) : (
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Sản phẩm</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Người dùng</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Đánh giá</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Bình luận</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Trạng thái</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ngày tạo</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {reviews.map((review) => (
-                                    <tr key={review._id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                {review.product?.images?.[0] && (
-                                                    <img
-                                                        src={review.product.images[0]}
-                                                        alt={review.product.name}
-                                                        className="w-12 h-12 object-cover rounded"
-                                                    />
-                                                )}
-                                                <div className="font-medium text-gray-900 max-w-xs truncate">
-                                                    {review.product?.name || 'N/A'}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">{review.user?.username || 'N/A'}</div>
-                                            <div className="text-xs text-gray-500">{review.user?.email}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {renderStars(review.rating)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900 max-w-xs truncate">
-                                                {review.comment}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {getStatusBadge(review.status)}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                            {formatDate(review.createdAt)}
-                                        </td>
-                                        <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                <button
-                                                    onClick={() => viewDetail(review._id)}
-                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Chi tiết"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                </button>
-                                                {review.status === 'pending' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleApprove(review._id)}
-                                                            className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                            title="Duyệt"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRejectClick(review)}
-                                                            className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                                                            title="Từ chối"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                        </button>
-                                                    </>
-                                                )}
-                                                <button
-                                                    onClick={() => handleDelete(review._id)}
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Xóa"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </td>
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Sản phẩm</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Người dùng</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Đánh giá</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Bình luận</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Trạng thái</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ngày tạo</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Thao tác</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {reviews.map((review) => (
+                                        <tr key={review._id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    {review.product?.images?.[0] && (
+                                                        <img
+                                                            src={review.product.images[0].url || review.product.images[0]}
+                                                            alt={review.product.name}
+                                                            className="w-12 h-12 object-cover rounded"
+                                                        />
+                                                    )}
+                                                    <div className="font-medium text-gray-900 max-w-xs truncate">
+                                                        {review.product?.name || 'N/A'}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900">{review.user?.username || 'N/A'}</div>
+                                                <div className="text-xs text-gray-500">{review.user?.email}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {renderStars(review.rating)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900 max-w-xs truncate">
+                                                    {review.comment}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {getStatusBadge(review.status)}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                                                {formatDate(review.createdAt)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <button
+                                                        onClick={() => viewDetail(review._id)}
+                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Chi tiết"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                    </button>
+                                                    {review.status === 'pending' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApprove(review._id)}
+                                                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                                title="Duyệt"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectClick(review)}
+                                                                className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                                                title="Từ chối"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDelete(review._id)}
+                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Xóa"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
 
                         {/* Pagination */}
