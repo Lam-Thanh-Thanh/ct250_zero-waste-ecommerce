@@ -447,6 +447,13 @@ const Checkout = () => {
                       </div>
                       <div className="flex-grow min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.product.name}</p>
+                        {item.variant && (
+                           <p className="text-xs text-gray-500">
+                             {item.variant.size && `Size: ${item.variant.size} `}
+                             {item.variant.weight && `${item.variant.weight} `}
+                             {item.variant.volume && `${item.variant.volume}`}
+                           </p>
+                        )}
                         <p className="text-xs text-gray-500">SL: {item.quantity}</p>
                       </div>
                       <p className="text-sm font-medium text-gray-900 flex-shrink-0">

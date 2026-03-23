@@ -179,6 +179,7 @@ const Dashboard = () => {
   // ── Initial data (loaded once) ──
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [newOrders, setNewOrders] = useState(0);
+  const [newItems, setNewItems] = useState(0);
   const [newUsers, setNewUsers] = useState(0);
   const [initChartData, setInitChartData] = useState([]);
   const [initOrderPerformance, setInitOrderPerformance] = useState([]);
@@ -196,6 +197,7 @@ const Dashboard = () => {
       const d = res.data;
       setMonthlyRevenue(d.monthlyRevenue || 0);
       setNewOrders(d.newOrders || 0);
+      setNewItems(d.newItems || 0);
       setNewUsers(d.newUsers || 0);
       setInitChartData(d.revenueByDay || []);
       setInitOrderPerformance(d.orderPerformance || []);
@@ -241,11 +243,11 @@ const Dashboard = () => {
   const categoryRevenue = categoriesFilter.data || [];
 
   const plasticChartData = useMemo(() =>
-    (plasticFilter.data || []).map(d => ({ date: d.date, plastic: (d.orders || 0) * 0.5 })),
+    (plasticFilter.data || []).map(d => ({ date: d.date, plastic: (d.items || 0) * 0.1 })),
     [plasticFilter.data]
   );
 
-  const totalPlasticReduced = useMemo(() => (newOrders * 0.5).toFixed(1), [newOrders]);
+  const totalPlasticReduced = useMemo(() => (newItems * 0.1).toFixed(1), [newItems]);
 
   const categoryBarData = useMemo(() =>
     categoryRevenue.map(c => ({ name: c.category, value: c.revenue })),

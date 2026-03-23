@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const ProductVariant = require('../models/ProductVariant');
 const Promotion = require('../models/Promotion');
 const orderService = require('../services/orderService');
 const paymentService = require('../services/paymentService');
@@ -237,12 +238,18 @@ exports.updateOrderStatus = async (req, res) => {
 
             // Cập nhật số lượng đã bán cho sản phẩm
             for (const item of order.items) {
-                await Product.findByIdAndUpdate(item.product, {
-                    $inc: {
-                        sold: item.quantity,
-                        stock: -item.quantity
-                    }
-                });
+                if (item.variant) {
+                    await ProductVariant.findByIdAndUpdate(item.variant, {
+                        $inc: { stockQuantity: -item.quantity }
+                    });
+                } else {
+                    await Product.findByIdAndUpdate(item.product, {
+                        $inc: {
+                            sold: item.quantity,
+                            stock: -item.quantity
+                        }
+                    });
+                }
             }
         }
 
@@ -253,9 +260,15 @@ exports.updateOrderStatus = async (req, res) => {
 
             // Hoàn lại stock
             for (const item of order.items) {
-                await Product.findByIdAndUpdate(item.product, {
-                    $inc: { stock: item.quantity }
-                });
+                if (item.variant) {
+                    await ProductVariant.findByIdAndUpdate(item.variant, {
+                        $inc: { stockQuantity: item.quantity }
+                    });
+                } else {
+                    await Product.findByIdAndUpdate(item.product, {
+                        $inc: { stock: item.quantity }
+                    });
+                }
             }
 
             // Hoàn lại mã giảm giá nếu có sử dụng
@@ -279,12 +292,18 @@ exports.updateOrderStatus = async (req, res) => {
 
             // Trừ số lượng đã bán
             for (const item of order.items) {
-                await Product.findByIdAndUpdate(item.product, {
-                    $inc: {
-                        sold: -item.quantity,
-                        stock: item.quantity
-                    }
-                });
+                if (item.variant) {
+                    await ProductVariant.findByIdAndUpdate(item.variant, {
+                        $inc: { stockQuantity: item.quantity }
+                    });
+                } else {
+                    await Product.findByIdAndUpdate(item.product, {
+                        $inc: {
+                            sold: -item.quantity,
+                            stock: item.quantity
+                        }
+                    });
+                }
             }
         }
 

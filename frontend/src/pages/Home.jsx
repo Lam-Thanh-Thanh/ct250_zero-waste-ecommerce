@@ -15,6 +15,7 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [addingToCart, setAddingToCart] = useState(null);
+  const [selectedVariants, setSelectedVariants] = useState({});
 
   // Load sản phẩm
   useEffect(() => {
@@ -37,7 +38,11 @@ const Home = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
-  const handleAddToCart = async (e, productId) => {
+  const handleVariantChange = (productId, variantId) => {
+      setSelectedVariants(prev => ({ ...prev, [productId]: variantId }));
+  };
+
+  const handleAddToCart = async (e, product) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -47,9 +52,17 @@ const Home = () => {
       return;
     }
 
+    const hasVariants = product.variants && product.variants.length > 0;
+    const selectedVariantId = selectedVariants[product._id];
+
+    if (hasVariants && !selectedVariantId) {
+        toast.warning('Vui lòng chọn một phân loại sản phẩm!');
+        return;
+    }
+
     try {
-      setAddingToCart(productId);
-      await addToCart(productId, 1);
+      setAddingToCart(product._id);
+      await addToCart(product._id, 1, selectedVariantId);
       toast.success('🛒 Đã thêm vào giỏ hàng!');
     } catch (error) {
       toast.error(error.message || 'Lỗi khi thêm vào giỏ hàng');
@@ -250,7 +263,17 @@ const Home = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {products.map((product) => {
               const mainImage = product.images?.find(img => img.isMain) || product.images?.[0];
-              const finalPrice = product.finalPrice || (product.price - (product.price * (product.discount || 0) / 100));
+              const hasVariants = product.variants && product.variants.length > 0;
+              const selectedVariantId = selectedVariants[product._id];
+              const selectedVariant = hasVariants ? product.variants.find(v => v._id === selectedVariantId) : null;
+              
+              let displayPrice = product.price;
+              if (selectedVariant) {
+                  displayPrice = product.price + (selectedVariant.priceModifier || 0);
+              }
+              const finalPrice = displayPrice - (displayPrice * (product.discount || 0) / 100);
+              const displayStock = selectedVariant ? selectedVariant.stockQuantity : product.stock;
+              const isStockAvailable = hasVariants ? (selectedVariant ? displayStock > 0 : true) : product.inStock;
 
               return (
                 <div key={product._id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group">
@@ -304,29 +327,49 @@ const Home = () => {
                       {product.discount > 0 ? (
                         <div className="flex items-center space-x-2">
                           <span className="text-lg font-bold text-green-600">{formatPrice(finalPrice)}</span>
-                          <span className="text-sm text-gray-400 line-through">{formatPrice(product.price)}</span>
+                          <span className="text-sm text-gray-400 line-through">{formatPrice(displayPrice)}</span>
                         </div>
                       ) : (
-                        <span className="text-lg font-bold text-green-600">{formatPrice(product.price)}</span>
+                        <span className="text-lg font-bold text-green-600">{formatPrice(displayPrice)}</span>
                       )}
                     </div>
 
                     {/* Stock info */}
                     <div className="flex items-center justify-between mb-3">
-                      <span className={`text-xs ${product.inStock ? 'text-green-600' : 'text-red-500'}`}>
-                        {product.inStock ? `Còn ${product.stock} sản phẩm` : 'Hết hàng'}
+                      <span className={`text-xs ${isStockAvailable ? 'text-green-600' : 'text-red-500'}`}>
+                        {isStockAvailable && (!hasVariants || selectedVariant) ? `Còn ${displayStock} sản phẩm` : (!isStockAvailable ? 'Hết hàng' : '')}
                       </span>
                       {product.sold > 0 && (
                         <span className="text-xs text-gray-400">Đã bán {product.sold}</span>
                       )}
                     </div>
 
+                    {/* Variant Selector */}
+                    {hasVariants && (
+                        <div className="mb-3">
+                            <select 
+                                className="w-full text-xs p-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
+                                value={selectedVariantId || ''}
+                                onChange={(e) => handleVariantChange(product._id, e.target.value)}
+                            >
+                                <option value="">Chọn phân loại...</option>
+                                {product.variants.map(v => (
+                                    <option key={v._id} value={v._id} disabled={v.stockQuantity <= 0}>
+                                        {v.size && `Size: ${v.size} `}{v.weight && `${v.weight} `}{v.volume && `${v.volume} `} 
+                                        {v.priceModifier > 0 ? `(+${formatPrice(v.priceModifier)})` : v.priceModifier < 0 ? `(${formatPrice(v.priceModifier)})` : ''}
+                                        {v.stockQuantity <= 0 ? ' - Hết' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {/* Add to Cart Button */}
                     <button
-                      onClick={(e) => handleAddToCart(e, product._id)}
-                      disabled={!product.inStock || addingToCart === product._id}
+                      onClick={(e) => handleAddToCart(e, product)}
+                      disabled={!isStockAvailable || addingToCart === product._id || (hasVariants && !selectedVariantId)}
                       className={`w-full py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center transition-all duration-200 ${
-                        product.inStock
+                        isStockAvailable && (!hasVariants || selectedVariantId)
                           ? 'bg-green-600 hover:bg-green-700 text-white hover:shadow-md'
                           : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       }`}
@@ -336,7 +379,7 @@ const Home = () => {
                       ) : (
                         <>
                           <FiShoppingCart className="mr-2" size={16} />
-                          {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                          {isStockAvailable ? (hasVariants && !selectedVariantId ? 'Chọn phân loại' : 'Thêm vào giỏ') : 'Hết hàng'}
                         </>
                       )}
                     </button>

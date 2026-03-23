@@ -17,6 +17,11 @@ const cartItemSchema = new mongoose.Schema({
         required: true,
         min: [1, 'Số lượng tối thiểu là 1'],
         default: 1
+    },
+    variant: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ProductVariant',
+        default: null
     }
 }, {
     _id: true,
