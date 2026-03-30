@@ -164,7 +164,7 @@ const Cart = () => {
                                 {formatPrice(item.product.finalPrice)}
                               </span>
                               <span className="text-gray-400 line-through text-sm">
-                                {formatPrice(item.product.price)}
+                                {formatPrice(item.product.price + (item.variant?.priceModifier || 0))}
                               </span>
                               <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">
                                 -{item.product.discount}%
@@ -172,7 +172,7 @@ const Cart = () => {
                             </div>
                           ) : (
                             <span className="text-green-600 font-semibold">
-                              {formatPrice(item.product.price)}
+                              {formatPrice(item.product.finalPrice || (item.product.price + (item.variant?.priceModifier || 0)))}
                             </span>
                           )}
                         </div>

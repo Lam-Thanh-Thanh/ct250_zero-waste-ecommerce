@@ -609,10 +609,10 @@ exports.createOrder = async (req, res) => {
         });
 
         // Xử lý thanh toán
-        // VNPay: KHÔNG gọi processPayment ở đây vì thanh toán sẽ được xử lý
-        // sau khi user thanh toán trên cổng VNPay (qua return URL / IPN)
+        // VNPay & Momo: KHÔNG gọi processPayment ở đây vì thanh toán sẽ được xử lý
+        // sau khi user thanh toán trên cổng thanh toán (qua return URL / IPN)
         let paymentResult = null;
-        if (paymentMethod !== 'VNPay') {
+        if (paymentMethod !== 'VNPay' && paymentMethod !== 'Momo') {
             paymentResult = await paymentService.processPayment(
                 order._id,
                 paymentMethod || 'COD'
@@ -710,6 +710,176 @@ exports.cancelMyOrder = async (req, res) => {
         res.status(400).json({
             success: false,
             message: error.message || 'Lỗi khi hủy đơn hàng'
+        });
+    }
+};
+
+/**
+ * @route   PUT /api/orders/:id/return
+ * @desc    User yêu cầu trả hàng (chỉ cho đơn đã giao)
+ * @access  Private
+ */
+exports.requestReturn = async (req, res) => {
+    try {
+        const { items, overallReason } = req.body;
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Vui lòng chọn ít nhất một sản phẩm để trả lại'
+            });
+        }
+
+        // Validate items
+        const hasInvalidItem = items.some(
+            item => !item.product || !item.quantity || item.quantity <= 0 || !item.reason || !item.reason.trim()
+        );
+
+        if (hasInvalidItem) {
+            return res.status(400).json({
+                success: false,
+                message: 'Thông tin sản phẩm trả lại không hợp lệ (thiếu lý do hoặc số lượng)'
+            });
+        }
+
+        const order = await Order.findOne({
+            _id: req.params.id,
+            user: req.user._id
+        });
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy đơn hàng'
+            });
+        }
+
+        if (order.status !== 'delivered') {
+            return res.status(400).json({
+                success: false,
+                message: 'Chỉ có thể yêu cầu trả hàng cho đơn đã giao'
+            });
+        }
+
+        if (order.returnRequest && order.returnRequest.status !== 'none') {
+            return res.status(400).json({
+                success: false,
+                message: `Đơn hàng đã có yêu cầu trả hàng (${order.returnRequest.status})`
+            });
+        }
+
+        // Kiểm tra thời hạn trả hàng (7 ngày sau khi giao)
+        if (order.deliveredAt) {
+            const daysSinceDelivered = (Date.now() - new Date(order.deliveredAt).getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSinceDelivered > 7) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Đã quá thời hạn 7 ngày để yêu cầu trả hàng'
+                });
+            }
+        }
+
+        order.returnRequest = {
+            status: 'pending',
+            items: items.map(item => ({
+                product: item.product,
+                productName: item.productName || 'Sản phẩm',
+                productImage: item.productImage || '',
+                variant: item.variant || null,
+                quantity: item.quantity,
+                reason: item.reason.trim()
+            })),
+            overallReason: overallReason ? overallReason.trim() : '',
+            images: req.body.images || [],
+            requestedAt: new Date()
+        };
+
+        const totalItemsReturned = items.reduce((sum, item) => sum + Number(item.quantity), 0);
+
+        order.statusHistory.push({
+            status: 'return_requested',
+            note: `Yêu cầu trả hàng cho ${totalItemsReturned} sản phẩm`,
+            updatedBy: req.user._id,
+            updatedAt: new Date()
+        });
+
+        await order.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Đã gửi yêu cầu trả hàng thành công',
+            data: order
+        });
+    } catch (error) {
+        console.error('Request Return Error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Lỗi khi gửi yêu cầu trả hàng'
+        });
+    }
+};
+
+/**
+ * @route   PUT /api/orders/:id/process-return
+ * @desc    Admin xử lý yêu cầu đổi trả hàng
+ * @access  Private/Admin
+ */
+exports.processReturn = async (req, res) => {
+    try {
+        const { status, note } = req.body;
+
+        if (!['approved', 'rejected'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Trạng thái xử lý không hợp lệ'
+            });
+        }
+
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy đơn hàng'
+            });
+        }
+
+        if (order.returnRequest.status !== 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: 'Chỉ có thể xử lý các yêu cầu đang chờ duyệt'
+            });
+        }
+
+        order.returnRequest.status = status;
+        order.returnRequest.adminNote = note || '';
+        order.returnRequest.processedAt = new Date();
+
+        order.statusHistory.push({
+            status: status === 'approved' ? 'return_approved' : 'return_rejected',
+            note: `Yêu cầu trả hàng đã bị ${status === 'approved' ? 'chấp nhận' : 'từ chối'}. ${note ? `Ghi chú: ${note}` : ''}`,
+            updatedBy: req.user._id,
+            updatedAt: new Date()
+        });
+
+        // Nếu chấp nhận, có thể tự động đổi trạng thái đơn hàng (tùy nghiệp vụ)
+        if (status === 'approved') {
+            order.status = 'refunded';
+            order.paymentStatus = 'refunded';
+            // TODO: Cộng lại stock cho các biến thể đã bị trả lại
+        }
+
+        await order.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Yêu cầu trả hàng đã được ${status === 'approved' ? 'chấp nhận' : 'từ chối'}`,
+            data: order
+        });
+    } catch (error) {
+        console.error('Process Return Error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Lỗi khi xử lý yêu cầu đổi trả'
         });
     }
 };
