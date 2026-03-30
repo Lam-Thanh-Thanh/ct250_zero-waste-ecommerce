@@ -1,5 +1,6 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const ProductVariant = require('../models/ProductVariant');
 
 /**
  * Cart Service
@@ -14,14 +15,21 @@ class CartService {
             .populate({
                 path: 'items.product',
                 select: 'name slug price discount finalPrice stock inStock images isActive'
+            })
+            .populate({
+                path: 'items.variant'
             });
 
         if (!cart) {
             cart = await Cart.create({ user: userId, items: [] });
-            cart = await Cart.findById(cart._id).populate({
-                path: 'items.product',
-                select: 'name slug price discount finalPrice stock inStock images isActive'
-            });
+            cart = await Cart.findById(cart._id)
+                .populate({
+                    path: 'items.product',
+                    select: 'name slug price discount finalPrice stock inStock images isActive'
+                })
+                .populate({
+                    path: 'items.variant'
+                });
         }
 
         // Tính toán thông tin giỏ hàng
@@ -32,7 +40,7 @@ class CartService {
     /**
      * Thêm sản phẩm vào giỏ hàng
      */
-    async addItem(userId, productId, quantity = 1) {
+    async addItem(userId, productId, quantity = 1, variantId = null) {
         // 1. Kiểm tra sản phẩm tồn tại và còn active
         const product = await Product.findById(productId);
         if (!product) {
@@ -42,7 +50,18 @@ class CartService {
             throw new Error('Sản phẩm đã ngừng kinh doanh');
         }
         if (!product.inStock || product.stock < 1) {
-            throw new Error('Sản phẩm đã hết hàng');
+            // If it's a base product without variants, throw error
+            if (!variantId) {
+                throw new Error('Sản phẩm đã hết hàng');
+            }
+        }
+
+        // 1.5 Kiểm tra variant
+        let variant = null;
+        if (variantId) {
+            variant = await ProductVariant.findById(variantId);
+            if (!variant) throw new Error('Biến thể sản phẩm không tồn tại');
+            if (variant.stockQuantity < 1) throw new Error('Biến thể này đã hết hàng');
         }
 
         // 2. Lấy hoặc tạo cart
@@ -53,22 +72,24 @@ class CartService {
 
         // 3. Kiểm tra sản phẩm đã có trong giỏ chưa
         const existingItemIndex = cart.items.findIndex(
-            item => item.product.toString() === productId.toString()
+            item => item.product.toString() === productId.toString() && (item.variant ? item.variant.toString() : null) === (variantId ? variantId.toString() : null)
         );
+
+        const checkStock = variant ? variant.stockQuantity : product.stock;
 
         if (existingItemIndex > -1) {
             // Đã có → tăng số lượng
             const newQuantity = cart.items[existingItemIndex].quantity + quantity;
-            if (newQuantity > product.stock) {
-                throw new Error(`Chỉ còn ${product.stock} sản phẩm trong kho`);
+            if (newQuantity > checkStock) {
+                throw new Error(`Chỉ còn ${checkStock} sản phẩm trong kho`);
             }
             cart.items[existingItemIndex].quantity = newQuantity;
         } else {
             // Chưa có → thêm mới
-            if (quantity > product.stock) {
-                throw new Error(`Chỉ còn ${product.stock} sản phẩm trong kho`);
+            if (quantity > checkStock) {
+                throw new Error(`Chỉ còn ${checkStock} sản phẩm trong kho`);
             }
-            cart.items.push({ product: productId, quantity });
+            cart.items.push({ product: productId, quantity, variant: variantId });
         }
 
         await cart.save();
@@ -80,7 +101,7 @@ class CartService {
     /**
      * Cập nhật số lượng sản phẩm trong giỏ
      */
-    async updateItemQuantity(userId, productId, quantity) {
+    async updateItemQuantity(userId, productId, quantity, variantId = null) {
         if (quantity < 1) {
             throw new Error('Số lượng tối thiểu là 1');
         }
@@ -92,7 +113,7 @@ class CartService {
 
         // Tìm item trong giỏ
         const itemIndex = cart.items.findIndex(
-            item => item.product.toString() === productId.toString()
+            item => item.product.toString() === productId.toString() && (item.variant ? item.variant.toString() : null) === (variantId ? variantId.toString() : null)
         );
 
         if (itemIndex === -1) {
@@ -104,8 +125,17 @@ class CartService {
         if (!product) {
             throw new Error('Sản phẩm không tồn tại');
         }
-        if (quantity > product.stock) {
-            throw new Error(`Chỉ còn ${product.stock} sản phẩm trong kho`);
+
+        let variant = null;
+        if (variantId) {
+            variant = await ProductVariant.findById(variantId);
+            if (!variant) throw new Error('Biến thể sản phẩm không tồn tại');
+        }
+
+        const checkStock = variant ? variant.stockQuantity : product.stock;
+
+        if (quantity > checkStock) {
+            throw new Error(`Chỉ còn ${checkStock} sản phẩm trong kho`);
         }
 
         cart.items[itemIndex].quantity = quantity;
@@ -117,14 +147,14 @@ class CartService {
     /**
      * Xóa sản phẩm khỏi giỏ hàng
      */
-    async removeItem(userId, productId) {
+    async removeItem(userId, productId, variantId = null) {
         const cart = await Cart.findOne({ user: userId });
         if (!cart) {
             throw new Error('Giỏ hàng không tồn tại');
         }
 
         const itemIndex = cart.items.findIndex(
-            item => item.product.toString() === productId.toString()
+            item => item.product.toString() === productId.toString() && (item.variant ? item.variant.toString() : null) === (variantId ? variantId.toString() : null)
         );
 
         if (itemIndex === -1) {
@@ -157,9 +187,14 @@ class CartService {
             .filter(item => item.product) // Lọc bỏ product đã bị xóa
             .map(item => {
                 const product = item.product;
-                const price = product.price || 0;
+                const variant = item.variant; // This will be populated object or null
+                const basePrice = product.price || 0;
+                const priceModifier = variant ? (variant.priceModifier || 0) : 0;
+                const totalBasePrice = basePrice + priceModifier;
                 const discount = product.discount || 0;
-                const finalPrice = product.finalPrice || (price - (price * discount / 100));
+                
+                // If variant exists, we recalculate finalPrice based on modifier
+                const finalPrice = totalBasePrice - (totalBasePrice * discount / 100);
                 const subtotal = finalPrice * item.quantity;
 
                 return {
@@ -170,7 +205,7 @@ class CartService {
                         slug: product.slug,
                         price: product.price,
                         discount: product.discount,
-                        finalPrice: finalPrice,
+                        finalPrice: finalPrice, // Correctly applies variant pricing
                         stock: product.stock,
                         inStock: product.inStock,
                         isActive: product.isActive,
@@ -178,6 +213,14 @@ class CartService {
                             ? (product.images.find(img => img.isMain) || product.images[0]).url
                             : null
                     },
+                    variant: variant ? {
+                        _id: variant._id,
+                        size: variant.size,
+                        weight: variant.weight,
+                        volume: variant.volume,
+                        stockQuantity: variant.stockQuantity,
+                        priceModifier: variant.priceModifier
+                    } : null,
                     quantity: item.quantity,
                     subtotal: subtotal
                 };

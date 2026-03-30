@@ -9,12 +9,12 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, loginWithGoogle } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -37,36 +37,36 @@ const Login = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Vui lòng nhập email';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Vui lòng nhập mật khẩu';
     }
-    
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       console.log('Attempting login with:', formData);
       const result = await login(formData);
       console.log('Login result:', result);
-      
+
       if (result.success) {
         toast.success('Đăng nhập thành công!');
         navigate(from, { replace: true });
@@ -120,9 +120,8 @@ const Login = () => {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`block w-full pl-10 pr-3 py-3 border ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all`}
+                  className={`block w-full pl-10 pr-3 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all`}
                   placeholder="your@email.com"
                 />
               </div>
@@ -147,9 +146,8 @@ const Login = () => {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`block w-full pl-10 pr-12 py-3 border ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
-                  } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all`}
+                  className={`block w-full pl-10 pr-12 py-3 border ${errors.password ? 'border-red-500' : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all`}
                   placeholder="••••••••"
                 />
                 <button
@@ -191,11 +189,10 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-white font-medium ${
-                loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-green-600 hover:bg-green-700 active:bg-green-800'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors`}
+              className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-white font-medium ${loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-green-600 hover:bg-green-700 active:bg-green-800'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors`}
             >
               {loading ? (
                 <span className="flex items-center">
@@ -224,7 +221,7 @@ const Login = () => {
           </div>
 
           {/* Google Login Button */}
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 w-full">
             <GoogleLogin
               onSuccess={async (credentialResponse) => {
                 // credentialResponse.credential chứa Google ID Token
@@ -247,6 +244,7 @@ const Login = () => {
               shape="rectangular"
               width="100%"
               locale="vi_VN"
+              logo_alignment="center"
             />
           </div>
 

@@ -127,6 +127,12 @@ const productSchema = new mongoose.Schema({
     trim: true
   }],
   
+  // ===== BIẾN THỂ (Variants) =====
+  variants: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProductVariant'
+  }],
+  
   // ===== CERTIFICATE & PACKAGING =====
   certificates: [{
     type: mongoose.Schema.Types.ObjectId,

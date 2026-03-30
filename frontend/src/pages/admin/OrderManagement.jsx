@@ -650,7 +650,14 @@ const OrderManagement = () => {
                                             <tbody className="divide-y divide-gray-200">
                                                 {selectedOrder.items?.map((item, index) => (
                                                     <tr key={index}>
-                                                        <td className="px-4 py-3">{item.productName}</td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="font-medium text-gray-900">{item.productName}</div>
+                                                            {(item.variantSize || item.variantWeight || item.variantVolume) && (
+                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                    Phân loại: {[item.variantSize && `Size: ${item.variantSize}`, item.variantWeight, item.variantVolume].filter(Boolean).join(' - ')}
+                                                                </div>
+                                                            )}
+                                                        </td>
                                                         <td className="px-4 py-3 text-right">{formatCurrency(item.finalPrice)}</td>
                                                         <td className="px-4 py-3 text-center">{item.quantity}</td>
                                                         <td className="px-4 py-3 text-right font-medium">{formatCurrency(item.subtotal)}</td>

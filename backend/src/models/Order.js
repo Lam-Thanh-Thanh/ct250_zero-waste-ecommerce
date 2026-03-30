@@ -14,6 +14,14 @@ const orderDetailSchema = new mongoose.Schema({
     },
     productName: String,     // Lưu tên sản phẩm tại thời điểm đặt
     productImage: String,    // Lưu ảnh chính
+    variant: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ProductVariant',
+        default: null
+    },
+    variantSize: String,
+    variantWeight: Number,
+    variantVolume: String,
     quantity: {
         type: Number,
         required: true,
@@ -196,11 +204,10 @@ orderSchema.pre('save', function () {
 });
 
 // ===== INDEX: Tối ưu query =====
-orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ user: 1 });
 orderSchema.index({ status: 1 });
-orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, createdAt: 1 }); // Compound index for Dashboard
 orderSchema.index({ 'shippingAddress.phone': 1 });
 
 module.exports = mongoose.model('Order', orderSchema);

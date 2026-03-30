@@ -353,6 +353,11 @@ const OrderHistory = () => {
                             </div>
                             <div className="flex-grow min-w-0">
                               <p className="font-medium text-gray-900 truncate">{item.productName}</p>
+                              {(item.variantSize || item.variantWeight || item.variantVolume) && (
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Phân loại: {[item.variantSize && `Size: ${item.variantSize}`, item.variantWeight, item.variantVolume].filter(Boolean).join(' - ')}
+                                </p>
+                              )}
                               <div className="flex items-center text-sm text-gray-500">
                                 <span>{formatPrice(item.finalPrice)} × {item.quantity}</span>
                                 {item.discount > 0 && (

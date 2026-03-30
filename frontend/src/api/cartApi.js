@@ -28,10 +28,10 @@ export const getCart = async () => {
 /**
  * Thêm sản phẩm vào giỏ hàng
  */
-export const addToCart = async (productId, quantity = 1) => {
+export const addToCart = async (productId, quantity = 1, variantId = null) => {
     try {
         const response = await axios.post(`${API_URL}/cart/items`, 
-            { productId, quantity },
+            { productId, quantity, variantId },
             { headers: getAuthHeader() }
         );
         return response.data;
@@ -43,10 +43,10 @@ export const addToCart = async (productId, quantity = 1) => {
 /**
  * Cập nhật số lượng sản phẩm
  */
-export const updateCartItem = async (productId, quantity) => {
+export const updateCartItem = async (productId, quantity, variantId = null) => {
     try {
         const response = await axios.put(`${API_URL}/cart/items/${productId}`, 
-            { quantity },
+            { quantity, variantId },
             { headers: getAuthHeader() }
         );
         return response.data;
@@ -58,10 +58,11 @@ export const updateCartItem = async (productId, quantity) => {
 /**
  * Xóa sản phẩm khỏi giỏ hàng
  */
-export const removeCartItem = async (productId) => {
+export const removeCartItem = async (productId, variantId = null) => {
     try {
         const response = await axios.delete(`${API_URL}/cart/items/${productId}`, {
-            headers: getAuthHeader()
+            headers: getAuthHeader(),
+            data: { variantId }
         });
         return response.data;
     } catch (error) {

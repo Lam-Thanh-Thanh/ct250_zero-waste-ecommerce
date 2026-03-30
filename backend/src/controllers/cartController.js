@@ -33,7 +33,7 @@ exports.getCart = async (req, res) => {
  */
 exports.addItem = async (req, res) => {
     try {
-        const { productId, quantity } = req.body;
+        const { productId, quantity, variantId } = req.body;
 
         if (!productId) {
             return res.status(400).json({
@@ -45,7 +45,8 @@ exports.addItem = async (req, res) => {
         const cart = await cartService.addItem(
             req.user._id,
             productId,
-            quantity || 1
+            quantity || 1,
+            variantId
         );
 
         res.status(200).json({
@@ -70,7 +71,7 @@ exports.addItem = async (req, res) => {
 exports.updateItemQuantity = async (req, res) => {
     try {
         const { productId } = req.params;
-        const { quantity } = req.body;
+        const { quantity, variantId } = req.body;
 
         if (!quantity || quantity < 1) {
             return res.status(400).json({
@@ -82,7 +83,8 @@ exports.updateItemQuantity = async (req, res) => {
         const cart = await cartService.updateItemQuantity(
             req.user._id,
             productId,
-            quantity
+            quantity,
+            variantId
         );
 
         res.status(200).json({
@@ -107,7 +109,8 @@ exports.updateItemQuantity = async (req, res) => {
 exports.removeItem = async (req, res) => {
     try {
         const { productId } = req.params;
-        const cart = await cartService.removeItem(req.user._id, productId);
+        const { variantId } = req.body;
+        const cart = await cartService.removeItem(req.user._id, productId, variantId);
 
         res.status(200).json({
             success: true,

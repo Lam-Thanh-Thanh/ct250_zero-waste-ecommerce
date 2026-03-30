@@ -17,7 +17,7 @@ const reviewSchema = new mongoose.Schema({
         ref: 'Order',
         default: null // Optional - để verify purchase
     },
-    
+
     // Review content
     rating: {
         type: Number,
@@ -34,7 +34,7 @@ const reviewSchema = new mongoose.Schema({
     images: [{
         type: String // URL to review images
     }],
-    
+
     // Moderation
     status: {
         type: String,
@@ -45,7 +45,7 @@ const reviewSchema = new mongoose.Schema({
         type: String, // Lý do từ chối
         default: ''
     },
-    
+
     // Helpful votes
     helpful: {
         type: Number,
@@ -55,7 +55,7 @@ const reviewSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    
+
     // Verification
     verifiedPurchase: {
         type: Boolean,
@@ -75,13 +75,13 @@ reviewSchema.index({ createdAt: -1 });
 
 // ===== VIRTUAL =====
 // Get review age
-reviewSchema.virtual('age').get(function() {
+reviewSchema.virtual('age').get(function () {
     return Date.now() - this.createdAt.getTime();
 });
 
 // ===== METHODS =====
 // Mark as helpful by user
-reviewSchema.methods.markHelpful = async function(userId) {
+reviewSchema.methods.markHelpful = async function (userId) {
     if (!this.helpfulBy.includes(userId)) {
         this.helpfulBy.push(userId);
         this.helpful += 1;
@@ -90,7 +90,7 @@ reviewSchema.methods.markHelpful = async function(userId) {
 };
 
 // Unmark helpful
-reviewSchema.methods.unmarkHelpful = async function(userId) {
+reviewSchema.methods.unmarkHelpful = async function (userId) {
     const index = this.helpfulBy.indexOf(userId);
     if (index > -1) {
         this.helpfulBy.splice(index, 1);
@@ -101,7 +101,7 @@ reviewSchema.methods.unmarkHelpful = async function(userId) {
 
 // ===== STATICS =====
 // Get average rating for a product
-reviewSchema.statics.getAverageRating = async function(productId) {
+reviewSchema.statics.getAverageRating = async function (productId) {
     const result = await this.aggregate([
         { $match: { product: new mongoose.Types.ObjectId(productId), status: 'approved' } },
         {
@@ -112,12 +112,12 @@ reviewSchema.statics.getAverageRating = async function(productId) {
             }
         }
     ]);
-    
+
     return result[0] || { avgRating: 0, totalReviews: 0 };
 };
 
 // Get rating distribution for a product
-reviewSchema.statics.getRatingDistribution = async function(productId) {
+reviewSchema.statics.getRatingDistribution = async function (productId) {
     const distribution = await this.aggregate([
         { $match: { product: new mongoose.Types.ObjectId(productId), status: 'approved' } },
         {
@@ -128,18 +128,18 @@ reviewSchema.statics.getRatingDistribution = async function(productId) {
         },
         { $sort: { _id: -1 } }
     ]);
-    
+
     const result = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     distribution.forEach(d => {
         result[d._id] = d.count;
     });
-    
+
     return result;
 };
 
 // ===== MIDDLEWARE =====
 // Auto-set verifiedPurchase if order is provided
-reviewSchema.pre('save', async function() {
+reviewSchema.pre('save', async function () {
     if (this.isNew && this.order) {
         const Order = mongoose.model('Order');
         const order = await Order.findOne({
@@ -147,13 +147,13 @@ reviewSchema.pre('save', async function() {
             user: this.user,
             status: 'delivered'
         });
-        
+
         if (order) {
             // Check if product is in order
             const hasProduct = order.items.some(
                 item => item.product.toString() === this.product.toString()
             );
-            
+
             if (hasProduct) {
                 this.verifiedPurchase = true;
             }
@@ -162,15 +162,15 @@ reviewSchema.pre('save', async function() {
 });
 
 // Update product rating when review is approved/rejected
-reviewSchema.post('save', async function(doc) {
+reviewSchema.post('save', async function (doc) {
     if (doc.status === 'approved' || doc.status === 'rejected') {
         try {
             const Product = mongoose.model('Product');
             const stats = await mongoose.model('Review').getAverageRating(doc.product);
-            
+
             await Product.findByIdAndUpdate(doc.product, {
-                rating: Math.round(stats.avgRating * 10) / 10, // Round to 1 decimal
-                reviewCount: stats.totalReviews
+                'rating.average': Math.round(stats.avgRating * 10) / 10, // Round to 1 decimal
+                'rating.count': stats.totalReviews
             });
         } catch (error) {
             console.error('Error updating product rating:', error);
@@ -179,15 +179,15 @@ reviewSchema.post('save', async function(doc) {
 });
 
 // Update product rating when review is deleted
-reviewSchema.post('findOneAndDelete', async function(doc) {
+reviewSchema.post('findOneAndDelete', async function (doc) {
     if (doc && doc.status === 'approved') {
         try {
             const Product = mongoose.model('Product');
             const stats = await mongoose.model('Review').getAverageRating(doc.product);
-            
+
             await Product.findByIdAndUpdate(doc.product, {
-                rating: Math.round(stats.avgRating * 10) / 10,
-                reviewCount: stats.totalReviews
+                'rating.average': Math.round(stats.avgRating * 10) / 10, // Round to 1 decimal
+                'rating.count': stats.totalReviews
             });
         } catch (error) {
             console.error('Error updating product rating after delete:', error);
