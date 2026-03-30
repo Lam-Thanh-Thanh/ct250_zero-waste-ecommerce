@@ -1,5 +1,11 @@
 const Review = require('../models/Review');
 const Product = require('../models/Product');
+const Order = require('../models/Order');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+// const { CloudinaryStorage } = require('multer-storage-cloudinary');
+// const cloudinary = require('../config/cloudinary');
 
 /**
  * @route   GET /api/reviews
@@ -387,6 +393,266 @@ exports.getReviewStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Lỗi khi lấy thống kê đánh giá'
+        });
+    }
+};
+
+// ===========================================================
+// USER-FACING METHODS
+// ===========================================================
+
+/**
+ * Multer config cho upload ảnh review lưu cục bộ qua Frontend public folder
+ */
+const uploadDir = path.join(__dirname, '../../../../frontend/public/uploads/reviews');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const reviewStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'review-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+exports.uploadReviewImages = multer({
+    storage: reviewStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Chỉ chấp nhận file định dạng hình ảnh'), false);
+        }
+    }
+}).array('images', 5); // Max 5 images
+
+/**
+ * @route   POST /api/reviews
+ * @desc    User tạo đánh giá sản phẩm
+ * @access  Private
+ */
+exports.createReview = async (req, res) => {
+    try {
+        const { productId, orderId, rating, comment } = req.body;
+
+        if (!productId || !rating || !comment) {
+            return res.status(400).json({
+                success: false,
+                message: 'Vui lòng cung cấp đầy đủ: productId, rating, comment'
+            });
+        }
+
+        // Kiểm tra sản phẩm tồn tại
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy sản phẩm'
+            });
+        }
+
+        // Kiểm tra đã review chưa
+        const existingReview = await Review.findOne({
+            product: productId,
+            user: req.user._id
+        });
+        if (existingReview) {
+            return res.status(400).json({
+                success: false,
+                message: 'Bạn đã đánh giá sản phẩm này rồi'
+            });
+        }
+
+        // Xử lý ảnh upload
+        const imageUrls = req.files ? req.files.map(f => `/uploads/reviews/${f.filename}`) : [];
+
+        const reviewData = {
+            product: productId,
+            user: req.user._id,
+            rating: parseInt(rating),
+            comment: comment.trim(),
+            images: imageUrls,
+            status: 'pending'
+        };
+
+        // Kiểm tra verified purchase và các sản phẩm bị trả lại
+        if (orderId) {
+            const order = await Order.findOne({
+                _id: orderId,
+                user: req.user._id,
+                status: 'delivered'
+            });
+            if (order) {
+                // Kiểm tra xem sản phẩm có nằm trong danh sách trả hàng không
+                let isReturned = false;
+                if (order.returnRequest && order.returnRequest.items) {
+                    isReturned = order.returnRequest.items.some(
+                        item => item.product.toString() === productId.toString()
+                    );
+                }
+
+                if (isReturned) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Sản phẩm này đã được yêu cầu trả lại, không thể đánh giá'
+                    });
+                }
+
+                const hasProduct = order.items.some(
+                    item => item.product.toString() === productId.toString()
+                );
+                if (hasProduct) {
+                    reviewData.order = orderId;
+                    reviewData.verifiedPurchase = true;
+                }
+            }
+        }
+
+        const review = await Review.create(reviewData);
+
+        res.status(201).json({
+            success: true,
+            message: 'Đánh giá đã được gửi và đang chờ duyệt',
+            data: review
+        });
+    } catch (error) {
+        console.error('Create Review Error:', error);
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Bạn đã đánh giá sản phẩm này rồi'
+            });
+        }
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Lỗi khi tạo đánh giá'
+        });
+    }
+};
+
+/**
+ * @route   GET /api/reviews/my-reviews
+ * @desc    Lấy danh sách đánh giá của user hiện tại
+ * @access  Private
+ */
+exports.getMyReviews = async (req, res) => {
+    try {
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [reviews, total] = await Promise.all([
+            Review.find({ user: req.user._id })
+                .populate('product', 'name slug images price')
+                .populate('order', 'orderNumber')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(parseInt(limit))
+                .lean(),
+            Review.countDocuments({ user: req.user._id })
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                reviews,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(total / parseInt(limit)),
+                    totalReviews: total,
+                    limit: parseInt(limit)
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Get My Reviews Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi khi lấy danh sách đánh giá'
+        });
+    }
+};
+
+/**
+ * @route   GET /api/reviews/reviewable
+ * @desc    Lấy danh sách sản phẩm có thể đánh giá (đã mua, đã giao, chưa review)
+ * @access  Private
+ */
+exports.getReviewableProducts = async (req, res) => {
+    try {
+        // Lấy tất cả đơn hàng đã giao của user
+        const deliveredOrders = await Order.find({
+            user: req.user._id,
+            status: 'delivered'
+        }).lean();
+
+        if (deliveredOrders.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: []
+            });
+        }
+
+        // Lấy danh sách product IDs đã review
+        const reviewedProductIds = await Review.find({
+            user: req.user._id
+        }).distinct('product');
+
+        const reviewedSet = new Set(reviewedProductIds.map(id => id.toString()));
+
+        // Tìm sản phẩm chưa review từ các đơn đã giao
+        const reviewableItems = [];
+        const addedProductIds = new Set();
+
+        for (const order of deliveredOrders) {
+            for (const item of order.items) {
+                const productIdStr = item.product.toString();
+
+                // Bỏ qua nếu sản phẩm nằm trong danh sách yêu cầu trả hàng
+                let isReturned = false;
+                if (order.returnRequest && order.returnRequest.items) {
+                    isReturned = order.returnRequest.items.some(
+                        rItem => rItem.product.toString() === productIdStr
+                    );
+                }
+                if (isReturned) continue;
+
+                if (!reviewedSet.has(productIdStr) && !addedProductIds.has(productIdStr)) {
+                    reviewableItems.push({
+                        product: {
+                            _id: item.product,
+                            name: item.productName,
+                            image: item.productImage,
+                            price: item.price,
+                            finalPrice: item.finalPrice
+                        },
+                        order: {
+                            _id: order._id,
+                            orderNumber: order.orderNumber,
+                            deliveredAt: order.deliveredAt
+                        },
+                        variant: item.variantSize || item.variantWeight || item.variantVolume
+                            ? { size: item.variantSize, weight: item.variantWeight, volume: item.variantVolume }
+                            : null
+                    });
+                    addedProductIds.add(productIdStr);
+                }
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            data: reviewableItems
+        });
+    } catch (error) {
+        console.error('Get Reviewable Products Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi khi lấy danh sách sản phẩm có thể đánh giá'
         });
     }
 };

@@ -83,6 +83,21 @@ export const addAdminNote = async (id, data) => {
 };
 
 /**
+ * Xử lý yêu cầu đổi trả (Admin)
+ */
+export const updateOrderReturnStatus = async (orderId, status, note) => {
+    try {
+        const response = await axios.put(`${API_URL}/orders/${orderId}/process-return`, 
+            { status, note }, 
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Lỗi khi xử lý trả hàng' };
+    }
+};
+
+/**
  * Lấy thống kê đơn hàng
  */
 export const getOrderStats = async () => {
@@ -170,3 +185,18 @@ export const cancelMyOrder = async (orderId, reason) => {
         throw error.response?.data || { message: 'Lỗi khi hủy đơn hàng' };
     }
 };
+
+/**
+ * User yêu cầu trả hàng
+ */
+export const requestReturn = async (orderId, returnData) => {
+    try {
+        const response = await axios.put(`${API_URL}/orders/${orderId}/return`, 
+            returnData,
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Lỗi khi yêu cầu trả hàng' };
+    }
+};
