@@ -5,7 +5,8 @@ import {
     getOrderById,
     updateOrderStatus,
     updatePaymentStatus,
-    getOrderStats
+    getOrderStats,
+    updateOrderReturnStatus
 } from '../../api/orderApi';
 
 const OrderManagement = () => {
@@ -114,8 +115,26 @@ const OrderManagement = () => {
             toast.success('Cập nhật trạng thái thành công');
             fetchOrders();
             fetchStats(); // Refresh stats
+            if (showDetailModal && selectedOrder?._id === orderId) {
+                viewOrderDetail(orderId); // refresh modal data
+            }
         } catch (error) {
             toast.error(error.message || 'Lỗi khi cập nhật trạng thái');
+        }
+    };
+
+    // Xử lý đổi trả hàng
+    const handleProcessReturn = async (orderId, status) => {
+        const note = window.prompt(`Nhập ghi chú (nếu có) khi ${status === 'approved' ? 'chấp nhận' : 'từ chối'} yêu cầu:`);
+        if (note === null) return; // User cancelled prompt
+        
+        try {
+            await updateOrderReturnStatus(orderId, status, note);
+            toast.success(`Đã ${status === 'approved' ? 'chấp nhận' : 'từ chối'} yêu cầu trả hàng.`);
+            fetchOrders();
+            viewOrderDetail(orderId); // refresh modal data
+        } catch (error) {
+            toast.error(error.message || 'Lỗi xử lý đổi trả hàng');
         }
     };
 
@@ -465,11 +484,16 @@ const OrderManagement = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {orders.map((order) => (
-                                            <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                                        {orders.map((order) => {
+                                            const hasReturn = order.returnRequest && order.returnRequest.status === 'pending';
+                                            return (
+                                            <tr key={order._id} className={`hover:bg-gray-50 transition-colors ${hasReturn ? 'bg-orange-50/50 border-l-4 border-orange-500' : ''}`}>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-semibold text-green-600">{order.orderNumber}</span>
+                                                        {hasReturn && (
+                                                            <span className="px-2 py-0.5 text-[10px] font-bold bg-orange-100 text-orange-800 rounded uppercase">Đổi/Trả</span>
+                                                        )}
                                                         <button
                                                             onClick={() => copyOrderNumber(order.orderNumber)}
                                                             className="text-gray-400 hover:text-gray-600"
@@ -520,14 +544,14 @@ const OrderManagement = () => {
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
                                                             onClick={() => viewOrderDetail(order._id)}
-                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${hasReturn ? 'text-orange-700 bg-orange-100 hover:bg-orange-200' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}`}
                                                             title="Xem chi tiết"
                                                         >
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                             </svg>
-                                                            Chi tiết
+                                                            {hasReturn ? 'Xử lý' : 'Chi tiết'}
                                                         </button>
                                                         <button
                                                             onClick={() => {
@@ -545,7 +569,8 @@ const OrderManagement = () => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ))}
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -667,6 +692,77 @@ const OrderManagement = () => {
                                         </table>
                                     </div>
                                 </div>
+
+                                {/* Yêu cầu đổi trả */}
+                                {selectedOrder.returnRequest && selectedOrder.returnRequest.status !== 'none' && (
+                                    <div className="mb-6 border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <h3 className="font-bold text-orange-800 flex items-center gap-2">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                                Yêu cầu đổi/trả hàng
+                                            </h3>
+                                            <span className={`px-2 py-1 text-xs font-bold rounded uppercase ${
+                                                selectedOrder.returnRequest.status === 'pending' ? 'bg-orange-200 text-orange-800' :
+                                                selectedOrder.returnRequest.status === 'approved' ? 'bg-green-200 text-green-800' :
+                                                'bg-red-200 text-red-800'
+                                            }`}>
+                                                {selectedOrder.returnRequest.status}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="bg-white p-3 rounded-lg border border-orange-200 mb-3 space-y-2">
+                                            <h4 className="text-sm font-medium text-gray-900 border-b pb-1 mb-2">Chi tiết sản phẩm đổi trả:</h4>
+                                            {selectedOrder.returnRequest.items && selectedOrder.returnRequest.items.length > 0 ? (
+                                                <ul className="space-y-2 max-h-40 overflow-y-auto">
+                                                    {selectedOrder.returnRequest.items.map((item, idx) => {
+                                                        const productName = item.productName || item.product?.name || 'Sản phẩm không xác định (đã bị xóa)';
+                                                        const variantStr = [item.variant?.size, item.variant?.weight, item.variant?.volume].filter(Boolean).join(' - ');
+                                                        return (
+                                                            <li key={idx} className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                                                                <div className="font-medium">{productName} {variantStr ? `(${variantStr})` : ''}</div>
+                                                                <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                                                                    <span><b>SL:</b> {item.quantity}</span>
+                                                                    <span><b>Lý do:</b> <span className="text-red-600">{item.reason}</span></span>
+                                                                </div>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-sm text-gray-700">Lý do (cũ): {selectedOrder.returnRequest.reason}</p>
+                                            )}
+                                            
+                                            {selectedOrder.returnRequest.overallReason && (
+                                                <p className="text-sm text-gray-700 mt-2 border-t pt-2">
+                                                    <b>Ghi chú chung:</b> {selectedOrder.returnRequest.overallReason}
+                                                </p>
+                                            )}
+                                            
+                                            {selectedOrder.returnRequest.adminNote && (
+                                                <p className="text-sm text-gray-700 mt-2 bg-yellow-50 p-2 rounded">
+                                                    <b>Phản hồi của bạn:</b> {selectedOrder.returnRequest.adminNote}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {selectedOrder.returnRequest.status === 'pending' && (
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => handleProcessReturn(selectedOrder._id, 'approved')}
+                                                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded text-sm font-medium transition"
+                                                >
+                                                    Chấp nhận Đổi/Trả
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleProcessReturn(selectedOrder._id, 'rejected')}
+                                                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition"
+                                                >
+                                                    Từ chối
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Summary */}
                                 <div className="border-t pt-4">

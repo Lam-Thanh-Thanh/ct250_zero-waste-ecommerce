@@ -17,6 +17,8 @@ import OrderHistory from './pages/OrderHistory';
 
 import Promotions from './pages/Promotions';
 import VNPayReturn from './pages/VNPayReturn';
+import MoMoReturn from './pages/MoMoReturn';
+import ReviewProduct from './pages/ReviewProduct';
 
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
@@ -58,6 +60,7 @@ function App() {
               <Route path="/register" element={<Register />} />
 
               <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
+              <Route path="/payment/momo-return" element={<MoMoReturn />} />
 
               <Route path="/productlist" element={<ProductList />} />
               <Route path="/productdetail" element={<ProductDetail/>} />
@@ -101,6 +104,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Promotions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reviews"
+                element={
+                  <ProtectedRoute>
+                    <ReviewProduct />
                   </ProtectedRoute>
                 }
               />

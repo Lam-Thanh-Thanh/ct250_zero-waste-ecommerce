@@ -70,6 +70,13 @@ router.put(
     orderController.cancelMyOrder
 );
 
+// User yêu cầu trả hàng (chỉ cho đơn đã giao)
+router.put(
+    '/:id/return',
+    protect,
+    orderController.requestReturn
+);
+
 // Admin - Cập nhật trạng thái đơn hàng
 router.put(
     '/:id/status',
@@ -92,6 +99,14 @@ router.put(
     protect,
     authorize('admin'),
     orderController.addAdminNote
+);
+
+// Admin - Xử lý đổi trả hàng
+router.put(
+    '/:id/process-return',
+    protect,
+    authorize('admin'),
+    orderController.processReturn
 );
 
 module.exports = router;

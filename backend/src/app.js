@@ -65,6 +65,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/promotions', require('./routes/promotionRoutes'));
 app.use('/api/vnpay', require('./routes/vnpayRoutes'));
+app.use('/api/momo', require('./routes/momoRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // ===== 404 HANDLER =====

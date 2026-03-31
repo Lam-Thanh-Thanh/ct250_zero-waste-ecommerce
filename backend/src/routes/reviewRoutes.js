@@ -8,6 +8,38 @@ const { protect, authorize } = require('../middlewares/auth');
  * Base URL: /api/reviews
  */
 
+// ===== USER ROUTES (phải đặt TRƯỚC /:id) =====
+
+// User tạo đánh giá (có upload ảnh)
+router.post(
+    '/',
+    protect,
+    reviewController.uploadReviewImages,
+    reviewController.createReview
+);
+
+// Lấy đánh giá của user hiện tại
+router.get(
+    '/my-reviews',
+    protect,
+    reviewController.getMyReviews
+);
+
+// Lấy sản phẩm có thể đánh giá
+router.get(
+    '/reviewable',
+    protect,
+    reviewController.getReviewableProducts
+);
+
+// ===== PUBLIC ROUTES =====
+
+// Get reviews for a product
+router.get(
+    '/product/:productId',
+    reviewController.getProductReviews
+);
+
 // ===== ADMIN ROUTES =====
 
 // Get statistics
@@ -64,14 +96,6 @@ router.delete(
     protect,
     authorize('admin'),
     reviewController.deleteReview
-);
-
-// ===== PUBLIC ROUTES =====
-
-// Get reviews for a product
-router.get(
-    '/product/:productId',
-    reviewController.getProductReviews
 );
 
 module.exports = router;

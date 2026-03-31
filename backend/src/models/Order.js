@@ -170,6 +170,28 @@ const orderSchema = new mongoose.Schema({
     },
     cancelledAt: Date,
 
+    // Return Request (yêu cầu trả hàng)
+    returnRequest: {
+        status: {
+            type: String,
+            enum: ['none', 'pending', 'approved', 'rejected'],
+            default: 'none'
+        },
+        items: [{
+            product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+            productName: String,
+            productImage: String,
+            variant: mongoose.Schema.Types.Mixed,
+            quantity: Number,
+            reason: String
+        }],
+        overallReason: String,
+        images: [String],
+        requestedAt: Date,
+        processedAt: Date,
+        adminNote: String
+    },
+
     // Delivery Tracking
     deliveryEstimate: Date,
     deliveredAt: Date,

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../contexts/CartContext';
 import { createOrder } from '../api/orderApi';
 import { createVNPayPaymentUrl } from '../api/vnpayApi';
+import { createMoMoPaymentUrl } from '../api/momoApi';
 import { validatePromotionCode, getAvailablePromotions } from '../api/promotionApi';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiCheck, FiCreditCard, FiTruck, FiShield } from 'react-icons/fi';
@@ -166,7 +167,6 @@ const Checkout = () => {
         // ===== Xử lý đặc biệt cho VNPay =====
         if (paymentMethod === 'VNPay') {
           try {
-            // Gọi API tạo URL thanh toán VNPay
             const vnpayResult = await createVNPayPaymentUrl({
               orderId: result.data.order._id,
               amount: result.data.order.totalAmount,
@@ -174,10 +174,9 @@ const Checkout = () => {
             });
 
             if (vnpayResult.success && vnpayResult.data.paymentUrl) {
-              // Redirect người dùng sang cổng thanh toán VNPay
               toast.info('Đang chuyển hướng đến cổng thanh toán VNPay...');
               window.location.href = vnpayResult.data.paymentUrl;
-              return; // Không thực hiện các bước bên dưới
+              return;
             } else {
               toast.error('Không thể tạo link thanh toán VNPay');
             }
@@ -185,8 +184,28 @@ const Checkout = () => {
             console.error('VNPay Error:', vnpayError);
             toast.error(vnpayError.message || 'Lỗi khi tạo thanh toán VNPay');
           }
+        } else if (paymentMethod === 'Momo') {
+          // ===== Xử lý đặc biệt cho MoMo =====
+          try {
+            const momoResult = await createMoMoPaymentUrl({
+              orderId: result.data.order._id,
+              amount: result.data.order.totalAmount,
+              orderDescription: `Thanh toan don hang ${result.data.order.orderNumber}`
+            });
+
+            if (momoResult.success && momoResult.data.paymentUrl) {
+              toast.info('Đang chuyển hướng đến cổng thanh toán MoMo...');
+              window.location.href = momoResult.data.paymentUrl;
+              return;
+            } else {
+              toast.error('Không thể tạo link thanh toán MoMo');
+            }
+          } catch (momoError) {
+            console.error('MoMo Error:', momoError);
+            toast.error(momoError.message || 'Lỗi khi tạo thanh toán MoMo');
+          }
         } else {
-          // Các phương thức khác: hiển thị màn hình thành công như cũ
+          // COD: hiển thị màn hình thành công
           setOrderSuccess(result.data);
           refreshCart();
           toast.success('🎉 Đặt hàng thành công!');

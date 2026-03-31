@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getMyOrders, getMyOrderDetail, cancelMyOrder } from '../api/orderApi';
+import { getMyOrders, getMyOrderDetail, cancelMyOrder, requestReturn } from '../api/orderApi';
 import { retryVNPayPayment } from '../api/vnpayApi';
+import { retryMoMoPayment } from '../api/momoApi';
 import { toast } from 'react-toastify';
-import { FiArrowLeft, FiPackage, FiTruck, FiCheck, FiX, FiClock, FiChevronDown, FiChevronUp, FiCreditCard } from 'react-icons/fi';
+import { FiArrowLeft, FiPackage, FiTruck, FiCheck, FiX, FiClock, FiChevronDown, FiChevronUp, FiCreditCard, FiRefreshCw, FiStar } from 'react-icons/fi';
 
 // Status config
 const STATUS_CONFIG = {
@@ -37,6 +38,14 @@ const OrderHistory = () => {
   const [orderDetail, setOrderDetail] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(null);
   const [retryLoading, setRetryLoading] = useState(null);
+
+  // Return Request Modal State
+  const [returnModalState, setReturnModalState] = useState({
+    isOpen: false,
+    order: null,
+    items: [], // [{ product, variant, quantity, reason, selected }]
+    overallReason: ''
+  });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -111,15 +120,26 @@ const OrderHistory = () => {
   };
 
   // Xử lý thanh toán lại VNPay
-  const handleRetryPayment = async (orderId) => {
+  const handleRetryPayment = async (orderId, paymentMethod) => {
     try {
       setRetryLoading(orderId);
-      const result = await retryVNPayPayment({ orderId });
-      if (result.success && result.data.paymentUrl) {
-        toast.info('Đang chuyển hướng đến cổng thanh toán VNPay...');
-        window.location.href = result.data.paymentUrl;
+      let result;
+      if (paymentMethod === 'Momo') {
+        result = await retryMoMoPayment({ orderId });
+        if (result.success && result.data.paymentUrl) {
+          toast.info('Đang chuyển hướng đến cổng thanh toán MoMo...');
+          window.location.href = result.data.paymentUrl;
+        } else {
+          toast.error('Không thể tạo link thanh toán MoMo');
+        }
       } else {
-        toast.error('Không thể tạo link thanh toán');
+        result = await retryVNPayPayment({ orderId });
+        if (result.success && result.data.paymentUrl) {
+          toast.info('Đang chuyển hướng đến cổng thanh toán VNPay...');
+          window.location.href = result.data.paymentUrl;
+        } else {
+          toast.error('Không thể tạo link thanh toán');
+        }
       }
     } catch (error) {
       toast.error(error.message || 'Lỗi khi tạo thanh toán lại');
@@ -127,6 +147,91 @@ const OrderHistory = () => {
       setRetryLoading(null);
     }
   };
+
+  // Mở Modal Trả Hàng
+  const handleOpenReturnModal = (orderId) => {
+    // Nếu chưa load detail thì load
+    if (expandedOrder !== orderId || !orderDetail) {
+      toast.info('Vui lòng mở rộng xem chi tiết đơn hàng trước khi yêu cầu trả hàng.');
+      handleExpandOrder(orderId);
+      return;
+    }
+
+    const order = orderDetail.order;
+    
+    // Tự động map items sang state form của modal
+    const itemsState = order.items.map(item => ({
+      product: item.product,
+      productName: item.productName,
+      productImage: item.productImage,
+      variant: item.variant || null,
+      maxQuantity: item.quantity,
+      quantity: 1, // Mặc định trả 1
+      reason: '',
+      selected: false
+    }));
+
+    setReturnModalState({
+      isOpen: true,
+      order: order,
+      items: itemsState,
+      overallReason: ''
+    });
+  };
+
+  // Đóng Modal Trả hàng
+  const handleCloseReturnModal = () => {
+    setReturnModalState({
+      isOpen: false,
+      order: null,
+      items: [],
+      overallReason: ''
+    });
+  };
+
+  // Submit Yêu cầu trả hàng từ Modal con
+  const handleSubmitReturnWrapper = async (localItems, localOverallReason) => {
+    const { order } = returnModalState;
+    const selectedItems = localItems.filter(item => item.selected);
+
+    if (selectedItems.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một sản phẩm để trả lại');
+      return;
+    }
+
+    const hasInvalidItem = selectedItems.some(item => !item.reason || !item.reason.trim());
+    if (hasInvalidItem) {
+      toast.error('Vui lòng nhập lý do cho tất cả sản phẩm đã chọn');
+      return;
+    }
+
+    try {
+      setCancelLoading(order._id);
+      
+      const payload = {
+        items: selectedItems.map(item => ({
+          product: item.product,
+          productName: item.productName,
+          productImage: item.productImage,
+          variant: item.variant,
+          quantity: item.quantity,
+          reason: item.reason
+        })),
+        overallReason: localOverallReason
+      };
+
+      await requestReturn(order._id, payload);
+      toast.success('Đã gửi yêu cầu trả hàng thành công!');
+      fetchOrders();
+      setExpandedOrder(null);
+      handleCloseReturnModal();
+    } catch (error) {
+      toast.error(error.message || 'Lỗi khi gửi yêu cầu trả hàng');
+    } finally {
+      setCancelLoading(null);
+    }
+  };
+
 
   // Status timeline component
   const StatusTimeline = ({ currentStatus, statusHistory }) => {
@@ -437,19 +542,19 @@ const OrderHistory = () => {
                     {/* Action Buttons */}
                     {['pending', 'confirmed'].includes(order.status) && (
                       <div className="flex items-center justify-end gap-3">
-                        {/* Nút Thanh toán lại: hiển thị khi VNPay + chưa thanh toán/thất bại */}
-                        {order.paymentMethod === 'VNPay' && 
+                        {/* Nút Thanh toán lại: hiển thị khi VNPay/MoMo + chưa thanh toán/thất bại */}
+                        {['VNPay', 'Momo'].includes(order.paymentMethod) && 
                          ['pending', 'failed'].includes(order.paymentStatus) && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRetryPayment(order._id);
+                              handleRetryPayment(order._id, order.paymentMethod);
                             }}
                             disabled={retryLoading === order._id}
                             className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
                           >
                             <FiCreditCard />
-                            {retryLoading === order._id ? 'Đang xử lý...' : 'Thanh toán lại'}
+                            {retryLoading === order._id ? 'Đang xử lý...' : `Thanh toán lại (${order.paymentMethod})`}
                           </button>
                         )}
 
@@ -464,6 +569,73 @@ const OrderHistory = () => {
                         >
                           {cancelLoading === order._id ? 'Đang hủy...' : 'Hủy đơn hàng'}
                         </button>
+                      </div>
+                    )}
+
+                    {/* Action Buttons cho đơn đã giao */}
+                    {order.status === 'delivered' && (
+                      <div className="space-y-3">
+                        {/* Return Request Status */}
+                        {order.returnRequest && order.returnRequest.status !== 'none' && (
+                          <div className={`p-3 rounded-lg text-sm ${
+                            order.returnRequest.status === 'pending' ? 'bg-yellow-50 border border-yellow-200' :
+                            order.returnRequest.status === 'approved' ? 'bg-green-50 border border-green-200' :
+                            'bg-red-50 border border-red-200'
+                          }`}>
+                            <div className="flex items-center gap-2 font-medium">
+                              <FiRefreshCw size={14} />
+                              <span>
+                                {order.returnRequest.status === 'pending' && '⏳ Yêu cầu trả hàng đang chờ xử lý'}
+                                {order.returnRequest.status === 'approved' && '✅ Yêu cầu trả hàng đã được chấp nhận'}
+                                {order.returnRequest.status === 'rejected' && '❌ Yêu cầu trả hàng bị từ chối'}
+                              </span>
+                            </div>
+                            <div className="mt-2 text-gray-700">
+                              <p className="font-medium mb-1">Chi tiết yêu cầu:</p>
+                              {order.returnRequest.items && order.returnRequest.items.length > 0 && (
+                                <ul className="list-disc list-inside ml-1 text-xs text-gray-600 mb-2">
+                                  {order.returnRequest.items.map((rtnItem, idx) => (
+                                    <li key={idx}>Trẩ <strong>{rtnItem.quantity}</strong> sản phẩm - Lý do: {rtnItem.reason}</li>
+                                  ))}
+                                </ul>
+                              )}
+                              {order.returnRequest.overallReason && (
+                                <p className="text-xs text-gray-600"><strong>Ghi chú thêm:</strong> {order.returnRequest.overallReason}</p>
+                              )}
+                            </div>
+                            {order.returnRequest.adminNote && (
+                              <p className="text-gray-600 mt-2 bg-white bg-opacity-50 p-2 rounded text-xs border border-gray-100">
+                                <b className="text-red-500">Phản hồi từ shop:</b> {order.returnRequest.adminNote}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-end gap-3">
+                          {/* Nút Đánh giá sản phẩm */}
+                          <Link
+                            to="/reviews"
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <FiStar /> Đánh giá sản phẩm
+                          </Link>
+
+                          {/* Nút Yêu cầu trả hàng (chỉ hiện khi chưa có yêu cầu) */}
+                          {(!order.returnRequest || order.returnRequest.status === 'none') && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenReturnModal(order._id);
+                              }}
+                              disabled={cancelLoading === order._id}
+                              className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
+                            >
+                              <FiRefreshCw />
+                              {cancelLoading === order._id ? 'Đang mở...' : 'Yêu cầu trả hàng'}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -491,6 +663,16 @@ const OrderHistory = () => {
             ))}
           </div>
         )}
+
+        {/* Return Request Modal */}
+        {returnModalState.isOpen && (
+          <ReturnOrderModalComponent 
+            initialState={returnModalState} 
+            onClose={handleCloseReturnModal} 
+            onSubmit={handleSubmitReturnWrapper}
+            isSubmitting={cancelLoading}
+          />
+        )}
       </main>
 
       {/* Footer */}
@@ -509,3 +691,138 @@ const OrderHistory = () => {
 };
 
 export default OrderHistory;
+
+/** 
+ * Separate components to prevent re-rendering the whole OrderHistory
+ * when user types into inner textboxes.
+ */
+const ReturnOrderModalComponent = ({ initialState, onClose, onSubmit, isSubmitting }) => {
+  const [items, setItems] = useState(initialState.items || []);
+  const [overallReason, setOverallReason] = useState(initialState.overallReason || '');
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...items];
+    newItems[index][field] = value;
+    setItems(newItems);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Modal Header */}
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <FiRefreshCw className="text-orange-500" /> Chọn sản phẩm đổi trả
+          </h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-red-500 transition"
+          >
+            <FiX size={24} />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto bg-gray-50">
+          <p className="text-sm text-gray-600 mb-4">Vui lòng chọn các sản phẩm bạn muốn đổi trả và điền lý do chi tiết cho từng sản phẩm.</p>
+          
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div key={index} className={`bg-white rounded-xl border-2 transition-all p-4 ${item.selected ? 'border-orange-500 shadow-md' : 'border-gray-200'}`}>
+                <div className="flex gap-4">
+                  {/* Checkbox */}
+                  <div className="pt-2">
+                    <input 
+                      type="checkbox" 
+                      checked={item.selected}
+                      onChange={(e) => handleItemChange(index, 'selected', e.target.checked)}
+                      className="w-5 h-5 text-orange-500 rounded border-gray-300 focus:ring-orange-500 cursor-pointer"
+                    />
+                  </div>
+                  
+                  {/* Image */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {item.productImage ? (
+                      <img src={item.productImage} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200"></div>
+                    )}
+                  </div>
+
+                  {/* Details & Form */}
+                  <div className="flex-grow min-w-0">
+                    <p className="font-semibold text-gray-900 line-clamp-2">{item.productName}</p>
+                    <p className="text-sm text-gray-500 mb-2">Số lượng mua: {item.maxQuantity}</p>
+                    
+                    {item.selected && (
+                      <div className="mt-3 space-y-3 p-3 bg-orange-50 rounded-lg">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Số lượng trả lại</label>
+                          <select 
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                            className="w-full sm:w-32 border border-gray-300 rounded-md p-2 text-sm focus:ring-orange-500 focus:border-orange-500 outline-none"
+                          >
+                            {Array.from({ length: item.maxQuantity }, (_, i) => i + 1).map(num => (
+                              <option key={num} value={num}>{num}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Lý do trả lại <span className="text-red-500">*</span></label>
+                          <input 
+                            type="text"
+                            value={item.reason}
+                            onChange={(e) => handleItemChange(index, 'reason', e.target.value)}
+                            placeholder="Ví dụ: Sản phẩm bị lỗi, sai màu sắc..."
+                            className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-orange-500 focus:border-orange-500 outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Overall Reason */}
+          <div className="mt-6 bg-white p-4 rounded-xl border border-gray-200">
+            <label className="block text-sm font-medium text-gray-900 mb-2">Ghi chú thêm cho shop (Tùy chọn)</label>
+            <textarea
+              value={overallReason}
+              onChange={(e) => setOverallReason(e.target.value)}
+              rows={2}
+              placeholder="Điền thêm thông tin để shop hỗ trợ bạn tốt hơn..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-white">
+          <button 
+            onClick={onClose}
+            className="px-5 py-2 rounded-lg text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 transition"
+            disabled={!!isSubmitting}
+          >
+            Hủy
+          </button>
+          <button 
+            onClick={() => onSubmit(items, overallReason)}
+            className="px-5 py-2 rounded-lg text-white font-medium bg-orange-500 hover:bg-orange-600 transition flex items-center gap-2 disabled:bg-orange-300"
+            disabled={!!isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent flex-shrink-0 rounded-full animate-spin"></div>
+                Đang gửi...
+              </>
+            ) : 'Gửi yêu cầu'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
