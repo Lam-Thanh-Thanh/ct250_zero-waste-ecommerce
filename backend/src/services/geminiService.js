@@ -19,8 +19,9 @@ const toolDeclarations = [
       {
         name: 'checkProductStock',
         description:
-          'Tra cứu thông tin tồn kho (số lượng còn lại, giá, trạng thái) của một sản phẩm trong cửa hàng Zero-Waste Store dựa trên tên sản phẩm. ' +
-          'Gọi hàm này khi người dùng hỏi về: số lượng tồn kho, sản phẩm còn hàng không, còn bao nhiêu cái, giá sản phẩm cụ thể, hoặc thông tin chi tiết của một sản phẩm cụ thể trong cửa hàng.',
+          'Tra cứu thông tin tồn kho (số lượng còn lại, giá, trạng thái) và các phân loại/biến thể (size, trọng lượng, dung tích, giá từng loại) của một sản phẩm trong cửa hàng Zero-Waste Store dựa trên tên sản phẩm. ' +
+          'Gọi hàm này khi người dùng hỏi về: số lượng tồn kho, sản phẩm còn hàng không, còn bao nhiêu cái, giá sản phẩm cụ thể, ' +
+          'các phân loại/biến thể/size/loại của sản phẩm, hoặc thông tin chi tiết của một sản phẩm cụ thể trong cửa hàng.',
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
@@ -31,6 +32,24 @@ const toolDeclarations = [
             }
           },
           required: ['productName']
+        }
+      },
+      {
+        name: 'getActivePromotions',
+        description:
+          'Tra cứu các chương trình khuyến mãi, mã giảm giá, coupon đang hoạt động trong cửa hàng Zero-Waste Store. ' +
+          'Gọi hàm này khi người dùng hỏi về: khuyến mãi, mã giảm giá, coupon, voucher, ưu đãi, giảm giá, sale, ' +
+          'có chương trình khuyến mãi gì không, mã giảm giá nào đang dùng được, có đang sale không.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            keyword: {
+              type: SchemaType.STRING,
+              description:
+                'Từ khóa tìm kiếm khuyến mãi (tùy chọn). Có thể là mã code, tên khuyến mãi, hoặc mô tả. Để trống nếu muốn xem tất cả khuyến mãi đang hoạt động.'
+            }
+          },
+          required: []
         }
       }
     ]
@@ -73,16 +92,22 @@ const callGeminiWithTools = async ({
     `Ngôn ngữ trả lời: ${language === 'vi' ? 'Tiếng Việt' : 'English'}. ` +
     'Chỉ trả lời bằng văn bản, không xử lý hoặc đề cập tới âm thanh/giọng nói.\n\n' +
     'KHI TRA CỨU SẢN PHẨM:\n' +
-    '- Khi người dùng hỏi về một sản phẩm cụ thể (tồn kho, giá cả, còn hàng không...), hãy sử dụng hàm checkProductStock để tra cứu dữ liệu thực từ database.\n' +
+    '- Khi người dùng hỏi về một sản phẩm cụ thể (tồn kho, giá cả, còn hàng không, phân loại, biến thể, size...), hãy sử dụng hàm checkProductStock để tra cứu dữ liệu thực từ database.\n' +
     '- Dựa trên kết quả trả về, tạo câu trả lời tự nhiên, thân thiện.\n' +
+    '- Nếu sản phẩm có biến thể (variants/phân loại), hãy liệt kê đầy đủ các phân loại với thông tin: tên phân loại (size/trọng lượng/dung tích), giá, tồn kho.\n' +
+    '- Khi nói về giá, hãy format theo VNĐ (ví dụ: 45.000₫).\n' +
     '- Nếu không tìm thấy sản phẩm, thông báo lịch sự và gợi ý khách kiểm tra lại tên hoặc duyệt danh mục trên website.\n' +
-    '- Nếu tìm thấy nhiều sản phẩm, liệt kê cho khách và hỏi họ muốn biết về sản phẩm nào.';
+    '- Nếu tìm thấy nhiều sản phẩm, liệt kê cho khách và hỏi họ muốn biết về sản phẩm nào.\n\n' +
+    'KHI TRA CỨU KHUYẾN MÃI:\n' +
+    '- Khi người dùng hỏi về khuyến mãi, mã giảm giá, coupon, voucher, ưu đãi, sale, hãy sử dụng hàm getActivePromotions để tra cứu.\n' +
+    '- Liệt kê đầy đủ: mã code, tên khuyến mãi, giá trị giảm, điều kiện áp dụng (đơn tối thiểu), thời hạn.\n' +
+    '- KHÔNG tự bịa mã giảm giá hay khuyến mãi. Chỉ cung cấp thông tin từ kết quả tra cứu thực tế.';
 
   // Tạo context text từ FAQ docs
   const contextText =
     contextDocs.length > 0
       ? 'Thông tin nội bộ và câu hỏi–trả lời mẫu (ưu tiên tham khảo nếu phù hợp, không tự bịa thêm):\n\n' +
-        contextDocs.join('\n\n')
+      contextDocs.join('\n\n')
       : '';
 
   // Khởi tạo model với tools
@@ -137,7 +162,14 @@ const callGeminiWithTools = async ({
       let funcResult;
       if (func) {
         try {
-          funcResult = await func(funcArgs.productName);
+          // Xử lý tham số dựa trên tên hàm
+          if (funcName === 'checkProductStock') {
+            funcResult = await func(funcArgs.productName);
+          } else if (funcName === 'getActivePromotions') {
+            funcResult = await func(funcArgs.keyword || '');
+          } else {
+            funcResult = await func(funcArgs);
+          }
         } catch (error) {
           console.error(`[Gemini] Error executing ${funcName}:`, error);
           funcResult = {
