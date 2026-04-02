@@ -63,7 +63,7 @@ function App() {
               <Route path="/payment/momo-return" element={<MoMoReturn />} />
 
               <Route path="/productlist" element={<ProductList />} />
-              <Route path="/productdetail" element={<ProductDetail/>} />
+              <Route path="/product/:id" element={<ProductDetail />} />
 
 
               {/* Protected Routes */}
