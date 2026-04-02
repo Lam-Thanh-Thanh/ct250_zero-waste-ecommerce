@@ -290,7 +290,7 @@ exports.getProductReviews = async (req, res) => {
         const sortOptions = {};
         sortOptions[sortBy] = order === 'asc' ? 1 : -1;
 
-        const [reviews, total, stats] = await Promise.all([
+        const [reviews, total, stats, distribution] = await Promise.all([
             Review.find({ 
                 product: req.params.productId, 
                 status: 'approved' 
@@ -315,7 +315,7 @@ exports.getProductReviews = async (req, res) => {
                 stats: {
                     averageRating: stats.avgRating || 0,
                     totalReviews: stats.totalReviews || 0,
-                    distribution: stats
+                    distribution: distribution || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
                 },
                 pagination: {
                     currentPage: parseInt(page),
@@ -404,7 +404,7 @@ exports.getReviewStats = async (req, res) => {
 /**
  * Multer config cho upload ảnh review lưu cục bộ qua Frontend public folder
  */
-const uploadDir = path.join(__dirname, '../../../../frontend/public/uploads/reviews');
+const uploadDir = path.join(__dirname, '../../../frontend/public/uploads/reviews');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -456,15 +456,16 @@ exports.createReview = async (req, res) => {
             });
         }
 
-        // Kiểm tra đã review chưa
+        // Kiểm tra đã review chưa cho đơn hàng này
         const existingReview = await Review.findOne({
             product: productId,
-            user: req.user._id
+            user: req.user._id,
+            order: orderId
         });
         if (existingReview) {
             return res.status(400).json({
                 success: false,
-                message: 'Bạn đã đánh giá sản phẩm này rồi'
+                message: 'Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi'
             });
         }
 
@@ -597,18 +598,26 @@ exports.getReviewableProducts = async (req, res) => {
             });
         }
 
-        // Lấy danh sách product IDs đã review
-        const reviewedProductIds = await Review.find({
-            user: req.user._id
-        }).distinct('product');
-
-        const reviewedSet = new Set(reviewedProductIds.map(id => id.toString()));
+        // Lấy tất cả các review của user này
+        const userReviews = await Review.find({ user: req.user._id }, 'product order').lean();
+        
+        const reviewedOrderProducts = new Set();
+        const reviewedProductsNoOrder = new Set();
+        
+        userReviews.forEach(r => {
+            if (r.order) {
+                reviewedOrderProducts.add(`${r.order.toString()}_${r.product.toString()}`);
+            } else {
+                reviewedProductsNoOrder.add(r.product.toString());
+            }
+        });
 
         // Tìm sản phẩm chưa review từ các đơn đã giao
         const reviewableItems = [];
-        const addedProductIds = new Set();
+        const addedOrderProducts = new Set();
 
         for (const order of deliveredOrders) {
+            const orderIdStr = order._id.toString();
             for (const item of order.items) {
                 const productIdStr = item.product.toString();
 
@@ -621,7 +630,20 @@ exports.getReviewableProducts = async (req, res) => {
                 }
                 if (isReturned) continue;
 
-                if (!reviewedSet.has(productIdStr) && !addedProductIds.has(productIdStr)) {
+                const orderProductKey = `${orderIdStr}_${productIdStr}`;
+
+                // Nếu đã review cho đơn hàng này thì bỏ qua
+                if (reviewedOrderProducts.has(orderProductKey)) continue;
+
+                // Xử lý tương thích ngược: nếu có 1 review cũ không gắn với order nào
+                // ta tính review cũ đó cho lần xuất hiện đầu tiên của sản phẩm này trong lịch sử đơn hàng
+                if (reviewedProductsNoOrder.has(productIdStr)) {
+                    reviewedProductsNoOrder.delete(productIdStr);
+                    continue;
+                }
+
+                // Nếu chưa có trong danh sách reviewable của đơn hàng này
+                if (!addedOrderProducts.has(orderProductKey)) {
                     reviewableItems.push({
                         product: {
                             _id: item.product,
@@ -639,7 +661,7 @@ exports.getReviewableProducts = async (req, res) => {
                             ? { size: item.variantSize, weight: item.variantWeight, volume: item.variantVolume }
                             : null
                     });
-                    addedProductIds.add(productIdStr);
+                    addedOrderProducts.add(orderProductKey);
                 }
             }
         }

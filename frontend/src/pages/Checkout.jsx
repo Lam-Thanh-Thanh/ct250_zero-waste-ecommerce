@@ -8,6 +8,7 @@ import { createMoMoPaymentUrl } from '../api/momoApi';
 import { validatePromotionCode, getAvailablePromotions } from '../api/promotionApi';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiCheck, FiCreditCard, FiTruck, FiShield } from 'react-icons/fi';
+import Header from '../components/layout/Header';
 
 const Checkout = () => {
   const { user } = useAuth();
@@ -275,21 +276,7 @@ const Checkout = () => {
   // ===== Checkout Form =====
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link to="/" className="flex items-center">
-              <img src="/Zero-Waste Store.png" alt="Logo" className="h-10 w-auto object-contain" />
-              <span className="ml-2 text-xl font-bold text-gray-800">Zero-Waste Store</span>
-            </Link>
-            <div className="flex items-center space-x-4">
-              <FiShield className="text-green-600" />
-              <span className="text-sm text-gray-600">Thanh toán an toàn</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}

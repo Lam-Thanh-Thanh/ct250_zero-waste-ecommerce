@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 
 const Profile = () => {
   const { user, updateUser, changePassword, logout } = useAuth();
@@ -95,23 +97,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-green-600 hover:text-green-700">
-              ← Quay lại trang chủ
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Tài khoản của tôi</h1>
-            <button
-              onClick={logout}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              Đăng xuất
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* User Info Card */}
@@ -323,6 +309,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

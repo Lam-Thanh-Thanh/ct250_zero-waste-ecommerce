@@ -159,9 +159,11 @@ exports.getProductById = async (req, res) => {
             });
         }
 
-        // Tăng view count
+        // Tăng view count mà không trigger full document validation
+        await Product.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+        
+        // Cập nhật giá trị hiển thị để trả về frontend
         product.views += 1;
-        await product.save();
 
         res.status(200).json({
             success: true,
@@ -295,19 +297,42 @@ exports.createProduct = async (req, res) => {
 
         // Xử lý tạo variants nếu có
         if (variants) {
-            const parsedVariants = Array.isArray(variants) ? variants : JSON.parse(variants);
-            if (parsedVariants.length > 0) {
-                const variantPromises = parsedVariants.map(v => ProductVariant.create({
-                    product: product._id,
-                    weight: v.weight || 0,
-                    size: v.size || '',
-                    volume: v.volume || '',
-                    stockQuantity: v.stockQuantity || 0,
-                    priceModifier: v.priceModifier || 0
-                }));
-                const createdVariants = await Promise.all(variantPromises);
-                product.variants = createdVariants.map(v => v._id);
-                await product.save();
+            try {
+                const parsedVariants = Array.isArray(variants) ? variants : JSON.parse(variants);
+                if (parsedVariants.length > 0) {
+                    const variantPromises = parsedVariants.map(v => {
+                        // Parse weight: loại bỏ ký tự không phải số, chuyển thành Number
+                        let parsedWeight = 0;
+                        if (v.weight !== undefined && v.weight !== null && v.weight !== '') {
+                            const numericWeight = String(v.weight).replace(/[^0-9.]/g, '');
+                            parsedWeight = parseFloat(numericWeight) || 0;
+                        }
+                        return ProductVariant.create({
+                            product: product._id,
+                            weight: parsedWeight,
+                            size: v.size || '',
+                            volume: v.volume || '',
+                            stockQuantity: parseInt(v.stockQuantity) || 0,
+                            priceModifier: parseFloat(v.priceModifier) || 0
+                        });
+                    });
+                    const createdVariants = await Promise.all(variantPromises);
+                    product.variants = createdVariants.map(v => v._id);
+                    await product.save();
+                }
+            } catch (variantError) {
+                console.error('Variant Creation Error:', variantError);
+                // Rollback: xóa product đã tạo nếu variant creation fail
+                await ProductVariant.deleteMany({ product: product._id });
+                await Product.findByIdAndDelete(product._id);
+                // Recalculate counts after rollback
+                await recalculateCategoryCount(category);
+                await recalculateCertificateCounts(productData.certificates);
+                await recalculatePackagingCount(productData.packaging);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Lỗi khi tạo phân loại sản phẩm: ' + (variantError.message || 'Dữ liệu không hợp lệ')
+                });
             }
         }
 
@@ -452,23 +477,27 @@ exports.updateProduct = async (req, res) => {
             const newVariantIds = [];
             
             for (const v of parsedVariants) {
+                // Parse weight an toàn
+                let parsedWeight = 0;
+                if (v.weight !== undefined && v.weight !== null && v.weight !== '') {
+                    const numericWeight = String(v.weight).replace(/[^0-9.]/g, '');
+                    parsedWeight = parseFloat(numericWeight) || 0;
+                }
+                const variantData = {
+                    weight: parsedWeight,
+                    size: v.size || '',
+                    volume: v.volume || '',
+                    stockQuantity: Math.max(0, parseInt(v.stockQuantity) || 0),
+                    priceModifier: parseFloat(v.priceModifier) || 0
+                };
+
                 if (v._id) {
-                    await ProductVariant.findByIdAndUpdate(v._id, {
-                        weight: v.weight || 0,
-                        size: v.size || '',
-                        volume: v.volume || '',
-                        stockQuantity: v.stockQuantity || 0,
-                        priceModifier: v.priceModifier || 0
-                    });
+                    await ProductVariant.findByIdAndUpdate(v._id, variantData);
                     newVariantIds.push(v._id);
                 } else {
                     const newVar = await ProductVariant.create({
                         product: product._id,
-                        weight: v.weight || 0,
-                        size: v.size || '',
-                        volume: v.volume || '',
-                        stockQuantity: v.stockQuantity || 0,
-                        priceModifier: v.priceModifier || 0
+                        ...variantData
                     });
                     newVariantIds.push(newVar._id.toString());
                 }

@@ -41,13 +41,16 @@ class OrderService {
         const orderItems = [];
         let subtotal = 0;
 
-        for (const cartItem of cart.items) {
+        const validCartItems = cart.items.filter(item => item.product);
+
+        if (validCartItems.length === 0) {
+            throw new Error('Các sản phẩm trong giỏ hàng không còn tồn tại, không thể đặt hàng');
+        }
+
+        for (const cartItem of validCartItems) {
             const product = cartItem.product;
             const variant = cartItem.variant;
 
-            if (!product) {
-                throw new Error('Một số sản phẩm không còn tồn tại');
-            }
             if (!product.isActive) {
                 throw new Error(`Sản phẩm "${product.name}" đã ngừng kinh doanh`);
             }
@@ -166,19 +169,27 @@ class OrderService {
         // 7. Trừ stock cho từng sản phẩm
         for (const item of orderItems) {
             if (item.variant) {
-                const updateVariant = await ProductVariant.findOneAndUpdate(
-                    {
-                        _id: item.variant,
-                        stockQuantity: { $gte: item.quantity }
-                    },
-                    {
-                        $inc: { stockQuantity: -item.quantity }
-                    },
-                    { new: true }
-                );
-                if (!updateVariant) {
+                const variantDoc = await ProductVariant.findById(item.variant);
+                if (!variantDoc || variantDoc.stockQuantity < item.quantity) {
                     await Order.findByIdAndDelete(savedOrder._id);
                     throw new Error(`Biến thể "${item.productName}" hết hàng trong quá trình xử lý`);
+                }
+                
+                variantDoc.stockQuantity -= item.quantity;
+                if (variantDoc.stockQuantity < 0) variantDoc.stockQuantity = 0;
+                await variantDoc.save();
+
+                // Cập nhật stock tổng của sản phẩm
+                const updateProductObj = await Product.findByIdAndUpdate(
+                    item.product,
+                    { $inc: { stock: -item.quantity } },
+                    { new: true }
+                );
+                
+                if (updateProductObj && updateProductObj.stock <= 0) {
+                    updateProductObj.stock = 0;
+                    updateProductObj.inStock = false;
+                    await updateProductObj.save();
                 }
             } else {
                 const updateResult = await Product.findOneAndUpdate(
@@ -334,6 +345,13 @@ class OrderService {
                 await ProductVariant.findByIdAndUpdate(item.variant, {
                     $inc: { stockQuantity: item.quantity }
                 });
+                await Product.findByIdAndUpdate(
+                    item.product,
+                    {
+                        $inc: { stock: item.quantity },
+                        $set: { inStock: true }
+                    }
+                );
             } else {
                 await Product.findByIdAndUpdate(
                     item.product,
