@@ -5,10 +5,9 @@ import App from './App.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    {/* Bọc ứng dụng với GoogleOAuthProvider để sử dụng Google Login */}
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <App />
-    </GoogleOAuthProvider>
-  </React.StrictMode>,
+  // Tắt StrictMode để tránh lỗi DOM (removeChild) do một số thư viện/transition
+  // không tương thích tốt với double-invocation trong môi trường dev.
+  <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+    <App />
+  </GoogleOAuthProvider>,
 )
