@@ -268,6 +268,14 @@ const ReviewManagement = () => {
                                                 <div className="text-sm text-gray-900 max-w-xs truncate">
                                                     {review.comment}
                                                 </div>
+                                                {review.images && review.images.length > 0 && (
+                                                    <div className="flex items-center gap-1 mt-1.5 text-xs text-blue-600 font-medium">
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                        {review.images.length} ảnh đính kèm
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 {getStatusBadge(review.status)}
@@ -384,9 +392,9 @@ const ReviewManagement = () => {
                                 <div className="flex items-center gap-3">
                                     {selectedReview.product?.images?.[0] && (
                                         <img
-                                            src={selectedReview.product.images[0]}
+                                            src={selectedReview.product.images[0].url || selectedReview.product.images[0]}
                                             alt={selectedReview.product.name}
-                                            className="w-16 h-16 object-cover rounded"
+                                            className="w-16 h-16 object-cover rounded border border-gray-200"
                                         />
                                     )}
                                     <div>
@@ -413,10 +421,25 @@ const ReviewManagement = () => {
                                 {renderStars(selectedReview.rating)}
                             </div>
 
-                            {/* Comment */}
+                            {/* Comment & Images */}
                             <div className="mb-6">
                                 <h3 className="font-semibold text-gray-900 mb-2">Bình luận</h3>
                                 <p className="text-gray-700">{selectedReview.comment}</p>
+                                
+                                {/* Review Images */}
+                                {selectedReview.images && selectedReview.images.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {selectedReview.images.map((img, idx) => (
+                                            <a key={idx} href={img} target="_blank" rel="noopener noreferrer">
+                                                <img 
+                                                    src={img} 
+                                                    alt={`Review ${idx}`} 
+                                                    className="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity"
+                                                />
+                                            </a>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Status */}

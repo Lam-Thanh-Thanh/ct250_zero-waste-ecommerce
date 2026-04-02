@@ -237,7 +237,7 @@ const ProductForm = () => {
     // Auto-calculate total stock from variants
     useEffect(() => {
         if (formData.variants && formData.variants.length > 0) {
-            const totalStock = formData.variants.reduce((sum, v) => sum + (Number(v.stockQuantity) || 0), 0);
+            const totalStock = formData.variants.reduce((sum, v) => sum + Math.max(0, Number(v.stockQuantity) || 0), 0);
             if (formData.stock !== totalStock.toString()) {
                 setFormData(prev => ({ ...prev, stock: totalStock.toString() }));
             }
@@ -416,8 +416,8 @@ const ProductForm = () => {
                                                     <input type="text" value={v.size || ''} onChange={(e) => handleVariantChange(index, 'size', e.target.value)} placeholder="Nhập kích thước..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Trọng lượng (VD: 500g)</label>
-                                                    <input type="text" value={v.weight || ''} onChange={(e) => handleVariantChange(index, 'weight', e.target.value)} placeholder="Nhập trọng lượng..." className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Trọng lượng (gram)</label>
+                                                    <input type="number" min="0" step="any" value={v.weight || ''} onChange={(e) => handleVariantChange(index, 'weight', e.target.value)} placeholder="VD: 500" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-xs font-medium text-gray-700 mb-1">Thể tích (VD: 1L, 500ml)</label>

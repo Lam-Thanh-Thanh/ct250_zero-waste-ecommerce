@@ -67,7 +67,7 @@ const reviewSchema = new mongoose.Schema({
 
 // ===== INDEXES =====
 // Đảm bảo mỗi user chỉ review 1 lần cho mỗi sản phẩm
-reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+reviewSchema.index({ product: 1, user: 1, order: 1 }, { unique: true });
 reviewSchema.index({ status: 1 });
 reviewSchema.index({ product: 1, status: 1 });
 reviewSchema.index({ rating: 1 });

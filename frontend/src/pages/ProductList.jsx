@@ -6,6 +6,8 @@ import { getProducts } from '../api/productApi';
 import { getAllCategories } from '../api/categoryApi';
 import { toast } from 'react-toastify';
 import { FiShoppingCart, FiStar, FiPackage, FiSearch, FiFilter } from 'react-icons/fi';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 
 const LIMIT = 12;
 
@@ -138,70 +140,7 @@ const ProductList = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link to="/" className="flex items-center">
-              <img src="/Zero-Waste Store.png" alt="Logo" className="h-10 w-auto object-contain" />
-              <span className="ml-2 text-xl font-bold text-gray-800">Zero-Waste Store</span>
-            </Link>
-
-            <nav className="flex items-center space-x-4">
-              {authLoading ? (
-                <div className="h-10 w-32 bg-gray-100 animate-pulse rounded-md" />
-              ) : isAuthenticated ? (
-                <>
-                  <span className="text-gray-700 hidden sm:inline">
-                    Xin chào, <strong>{user?.username}</strong>
-                  </span>
-                  <Link to="/" className="text-gray-700 hover:text-green-600 hidden sm:inline">
-                    Trang chủ
-                  </Link>
-                  <Link to="/cart" className="text-gray-700 hover:text-green-600 relative" title="Giỏ hàng">
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"
-                      />
-                    </svg>
-                    {cartItemCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                        {cartItemCount > 9 ? '9+' : cartItemCount}
-                      </span>
-                    )}
-                  </Link>
-                  {isAdmin && isAdmin() && (
-                    <Link to="/admin/dashboard" className="text-gray-700 hover:text-green-600">
-                      Quản trị
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm"
-                  >
-                    Đăng xuất
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/" className="text-gray-700 hover:text-green-600">
-                    Trang chủ
-                  </Link>
-                  <Link to="/login" className="text-gray-700 hover:text-green-600">
-                    Đăng nhập
-                  </Link>
-                  <Link to="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
-                    Đăng ký
-                  </Link>
-                </>
-              )}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Bộ sưu tập sản phẩm</h1>
@@ -326,7 +265,7 @@ const ProductList = () => {
         ) : (
           <>
             {/* Lưới card: giống style trang Home */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
               {products.map((product) => {
                 const mainImage = product.images?.find((img) => img.isMain) || product.images?.[0];
                 const hasVariants = product.variants && product.variants.length > 0;
@@ -502,11 +441,7 @@ const ProductList = () => {
         )}
       </main>
 
-      <footer className="bg-gray-800 text-white mt-16">
-        <div className="max-w-7xl mx-auto px-4 py-8 text-center text-sm">
-          <p>&copy; 2026 Zero-Waste Store</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

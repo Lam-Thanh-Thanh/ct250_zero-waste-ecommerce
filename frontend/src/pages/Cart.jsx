@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../contexts/CartContext';
 import { toast } from 'react-toastify';
 import { FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiArrowLeft } from 'react-icons/fi';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 
 const Cart = () => {
   const { user } = useAuth();
@@ -55,23 +57,7 @@ const Cart = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link to="/" className="flex items-center">
-              <img src="/Zero-Waste Store.png" alt="Logo" className="h-10 w-auto object-contain" />
-              <span className="ml-2 text-xl font-bold text-gray-800">Zero-Waste Store</span>
-            </Link>
-            <nav className="flex items-center space-x-4">
-              <Link to="/" className="text-gray-700 hover:text-green-600">Trang chủ</Link>
-              <Link to="/orders" className="text-gray-700 hover:text-green-600">Đơn hàng</Link>
-              <Link to="/profile" className="text-gray-700 hover:text-green-600">
-                Xin chào, <strong>{user?.username}</strong>
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Cart Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -290,17 +276,7 @@ const Cart = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <p>&copy; 2026 Zero-Waste Store. All rights reserved.</p>
-            <p className="mt-2 text-gray-400 text-sm">
-              Sản phẩm đồ án niên luận ngành Kỹ thuật phần mềm
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
